@@ -42,6 +42,15 @@ MODEL_FILE_NAMES = {
     XGBOOST: "xgboost_benchmark.joblib",
 }
 
+# What each model is there for, shown in the comparison table.
+MODEL_ROLES = {
+    DECISION_TREE: "Main (course)",
+    KNN: "Main (course)",
+    KNN_UNDERSAMPLED: "Main (course)",
+    NAIVE_BAYES: "Baseline",
+    XGBOOST: "Benchmark (beyond course)",
+}
+
 # One colour per model, so every plot uses the same colour for a model.
 MODEL_COLORS = {
     DECISION_TREE: "#2A9D8F",
