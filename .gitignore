@@ -1,0 +1,29 @@
+# Dataset (download it yourself, see README)
+data/
+*.csv
+!outputs/*.csv
+!outputs/**/*.csv
+
+# Trained models (re-create with: python main.py)
+models/
+*.joblib
+*.pkl
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ipynb_checkpoints/
+venv/
+.venv/
+*.egg-info/
+
+# Editors and OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Kaggle credentials and local notebook runs
+kaggle.json
+kaggle/output/
