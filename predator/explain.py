@@ -354,3 +354,56 @@ def write_tree_vs_xgboost_comparison(comparison_table, models, importance_table)
         file.write(text)
     print("\n" + text)
     return text
+
+
+def describe_decision_path(tree_pipeline, session):
+    """
+    List the yes/no questions one session answered on its way down the
+    Decision Tree, in plain words.
+
+    Example output line: "PageValues is 204.01, which is > 0.05"
+    For one-hot columns (threshold 0.5) it says "Month is Nov" or
+    "Month is not Nov" instead of comparing 0/1 numbers.
+
+    Inputs:
+        tree_pipeline: the fitted Decision Tree pipeline.
+        session: a one-row DataFrame of raw feature values.
+    Returns:
+        A list of strings, one per question, from the root to the leaf.
+    """
+    tree_model = tree_pipeline.named_steps["model"]
+    feature_names = get_feature_names(tree_pipeline)
+    transformed_session = tree_pipeline.named_steps["preprocess"].transform(session)
+
+    # decision_path() marks every node the session visits; indices[...]
+    # gives those node numbers in order from the root.
+    node_indicator = tree_model.decision_path(transformed_session)
+    visited_nodes = node_indicator.indices[node_indicator.indptr[0]:node_indicator.indptr[1]]
+
+    rules = []
+    for node in visited_nodes:
+        feature_index = tree_model.tree_.feature[node]
+        if feature_index < 0:
+            continue  # a leaf: no question is asked here
+        feature_name = feature_names[feature_index]
+        split_value = tree_model.tree_.threshold[node]
+        session_value = transformed_session[0, feature_index]
+        goes_left = session_value <= split_value
+
+        # Is this a one-hot column like "Month_Nov"?
+        original_feature = None
+        for categorical_feature in CATEGORICAL_FEATURES:
+            if feature_name.startswith(categorical_feature + "_"):
+                original_feature = categorical_feature
+        if original_feature is not None:
+            category = feature_name[len(original_feature) + 1:]
+            if goes_left:
+                rules.append("{} is not {}".format(original_feature, category))
+            else:
+                rules.append("{} is {}".format(original_feature, category))
+        else:
+            if goes_left:
+                rules.append("{} is {:.2f}, which is <= {:.2f}".format(feature_name, session_value, split_value))
+            else:
+                rules.append("{} is {:.2f}, which is > {:.2f}".format(feature_name, session_value, split_value))
+    return rules
