@@ -13,6 +13,9 @@ flowchart LR
   train --> explain["explain.py<br/>importance, ablation"]
   train --> threshold["threshold.py<br/>profit threshold"]
   evaluate --> errors["errors.py<br/>error analysis"]
+  evaluate --> significance["significance.py<br/>bootstrap, McNemar"]
+  train --> curves["curves.py<br/>learning, validation curves"]
+  threshold --> calibration["calibration.py<br/>reliability, isotonic"]
   threshold --> errors
   train --> files[("models/<br/>*.joblib + model_info.json")]
   files --> predict["predict.py<br/>command line"]
@@ -63,6 +66,7 @@ Model name constants (`DECISION_TREE`, `KNN`, `KNN_UNDERSAMPLED`, `NAIVE_BAYES`,
 | `train_all_models(train_features, train_target, ...)` | Tunes all five models, adds out-of-fold probabilities and CV F1 |
 | `save_models(results)` | joblib save of the fitted pipelines (`predict.load_model_by_name()` loads one) |
 | `save_model_info(info)` / `load_model_info()` | `models/model_info.json` for the app and CLI |
+| `save_out_of_fold_probabilities(...)` / `load_out_of_fold_probabilities()` | `models/oof_probabilities.csv`, which the app re-tunes the threshold on |
 
 ## `predator/evaluate.py`
 
@@ -71,6 +75,7 @@ Model name constants (`DECISION_TREE`, `KNN`, `KNN_UNDERSAMPLED`, `NAIVE_BAYES`,
 | `evaluate_model(...)` | Accuracy, precision, recall, F1, ROC-AUC, confusion matrix, report for one model |
 | `build_comparison_table(...)` | All models in one table; saves `model_comparison.csv` and `classification_reports.txt` |
 | `choose_best_model(table)` | Highest CV F1 |
+| `evaluate_slices(...)` | Precision, recall and F1 per visitor type, month and region |
 | `plot_roc_curves`, `plot_confusion_matrices`, `plot_metric_comparison` | Result plots |
 
 ## `predator/explain.py`
@@ -82,6 +87,7 @@ Model name constants (`DECISION_TREE`, `KNN`, `KNN_UNDERSAMPLED`, `NAIVE_BAYES`,
 | `permutation_importance_all_models(...)` | Permutation importance (ROC-AUC drop) on the 17 raw features for every model, heatmap + CSV |
 | `run_ablation(...)` | Retrain everything without PageValues, compare scores and top features |
 | `write_tree_vs_xgboost_comparison(...)` | Performance vs interpretability write-up with this run's numbers |
+| `plot_partial_dependence(models, model_names, train_features)` | Partial dependence of the probability on PageValues, Month and ExitRates
 | `describe_decision_path(tree_pipeline, session)` | The plain-English rules one session followed (used by the app) |
 
 ## `predator/threshold.py`
@@ -96,6 +102,32 @@ Business assumptions at the top: `AVERAGE_ORDER_PROFIT`, `OFFER_COST`, `OFFER_CO
 | `find_best_thresholds(curve)` | Best-F1 and best-profit thresholds |
 | `tune_thresholds(...)` | Chooses thresholds on out-of-fold training data, compares 0.5 / best F1 / best profit on test |
 | `plot_profit_curves(...)` | Profit and F1 against the threshold, per model |
+| `break_even_probability(...)` | The probability above which an offer pays off, for calibrated probabilities |
+| `find_best_profit_threshold(...)` | Most profitable threshold for any assumptions (used by the app) |
+| `run_sensitivity_analysis(...)` | Best threshold for 36 offer-cost and boost combinations, heatmap + CSV |
+
+## `predator/significance.py`
+
+| Function | What it does |
+|---|---|
+| `bootstrap_confidence_intervals(test_target, probabilities)` | 95% intervals for F1 and ROC-AUC from 1,000 resamples |
+| `mcnemar_test(test_target, predictions_a, predictions_b)` | McNemar's test with continuity correction; p-value via `math.erfc` |
+| `run_significance_analysis(...)` | Intervals for every model and McNemar for chosen pairs; saves both CSVs |
+
+## `predator/curves.py`
+
+| Function | What it does |
+|---|---|
+| `plot_learning_curves(models, train_features, train_target)` | Training and cross-validated F1 against training size for the Decision Tree and KNN |
+| `plot_validation_curves(models, train_features, train_target)` | F1 against `max_depth` (tree) and `n_neighbors` (KNN) |
+
+## `predator/calibration.py`
+
+| Function | What it does |
+|---|---|
+| `calibrate_model(pipeline, train_features, train_target)` | Isotonic `CalibratedClassifierCV` on the training folds |
+| `plot_reliability_diagram(...)` | Predicted probability against the real purchase rate, with Brier scores |
+| `run_calibration_analysis(...)` | Brier, ROC-AUC and break-even profit before and after calibration |
 
 ## `predator/errors.py`
 

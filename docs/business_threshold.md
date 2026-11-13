@@ -57,10 +57,25 @@ Full table: `outputs/threshold_comparison.csv`. Plot: `outputs/figures/profit_vs
 - **The profit curve is flat near its peak.** For XGBoost the training data put the best-profit threshold at 0.50, while on the test set 0.62 earned $72 more. Differences this small are within noise; any threshold on the plateau is a reasonable choice.
 - **Naive Bayes loses money at every threshold.** Its probabilities sit at 0 or 1, so moving the cutoff barely changes who is targeted. The right business decision with that model is not to run the campaign.
 
+## How sensitive is the threshold?
+
+`threshold.run_sensitivity_analysis()` repeats the search for 36 combinations of offer cost ($2 to $12) and conversion boost (10% to 60%) on the same out-of-fold probabilities (`outputs/sensitivity_analysis.csv`).
+
+![Best threshold for other assumptions](../outputs/figures/sensitivity_thresholds.png)
+
+- For the Decision Tree the best threshold ranges from 0.13 (cheap offer, strong boost) to 0.93, and with a 10% boost and an offer cost of $6 or more nothing is profitable: send no offers.
+- The direction never changes: cheaper offers and stronger boosts mean a lower threshold.
+
+## Calibrated probabilities make the threshold explainable
+
+If the probabilities are calibrated, an offer to a session with purchase probability p earns `p x order profit x boost - offer cost` on average, which is positive when p > offer cost / (order profit x boost) = 6 / 24 = **0.25** (`threshold.break_even_probability()`).
+
+The raw probabilities are not calibrated: balanced class weights push the Decision Tree's average to 0.28 against a real purchase rate of 0.155, which is why its tuned threshold is 0.70. After isotonic calibration (`predator/calibration.py`), the plain break-even rule earns $4,086 on the test set, more than the tuned 0.70 threshold on raw probabilities ($3,870). Details in [results.md](results.md#calibration).
+
 ## How to change the assumptions
 
 1. Edit the three constants at the top of `predator/threshold.py`.
 2. Run `python main.py`. The thresholds, the table, the plot and `models/model_info.json` are all refreshed.
-3. The Streamlit app and `predict.py` pick up the new best-profit thresholds automatically. In the app you can also move the threshold slider by hand.
+3. The Streamlit app and `predict.py` pick up the new best-profit thresholds automatically. The app also has the three assumptions as inputs in its sidebar and re-tunes the threshold on the out-of-fold training probabilities as you change them, without re-running `main.py`.
 
 Rule of thumb: targeting pays when precision > `OFFER_COST / (AVERAGE_ORDER_PROFIT x OFFER_CONVERSION_BOOST)`. A cheaper offer or a bigger boost lowers that bar and pushes the best threshold down; a more expensive offer pushes it up.
