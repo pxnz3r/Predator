@@ -127,9 +127,11 @@ Business assumptions at the top: `AVERAGE_ORDER_PROFIT`, `OFFER_COST`, `OFFER_CO
 | `examples/*.json` | Two real test-set sessions (a buyer and a browser) for the CLI and the app |
 | `tests/` | pytest: data loads, pipelines fit, prediction output is valid, profit and threshold logic |
 | `scripts/build_notebooks.py` | Builds both notebooks from one story; the Kaggle one gets the package source inline |
+| `pyproject.toml`, `uv.lock` | Dependencies (latest versions, locked), pytest and ruff settings |
+| `.github/workflows/ci.yml` | On every push: lint, format check, download the dataset, run the tests |
 | `notebooks/predator_walkthrough.ipynb` | Walkthrough that imports the package |
 | `kaggle/predator-kaggle.ipynb` | Self-contained Kaggle version |
 
 ## Changing the code
 
-After editing anything in `predator/`, rebuild the notebooks so the Kaggle copy matches: `python scripts/build_notebooks.py`. Then `pytest -q` and `python main.py`.
+After editing anything in `predator/`, rebuild the notebooks so the Kaggle copy matches: `python scripts/build_notebooks.py`. Then `ruff check .`, `pytest -q` and `python main.py`.

@@ -275,7 +275,7 @@ def plot_ablation_scores(metrics_table):
     positions = list(range(len(metrics_table)))
     bar_width = 0.38
 
-    for axis, metric in zip(axes, ["F1", "ROC-AUC"]):
+    for axis, metric in zip(axes, ["F1", "ROC-AUC"], strict=True):
         with_values = metrics_table[metric + " (all features)"]
         without_values = metrics_table[metric + " (no PageValues)"]
         axis.bar([p - bar_width / 2 for p in positions], with_values, width=bar_width,

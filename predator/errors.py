@@ -55,7 +55,7 @@ def label_prediction_groups(pipeline, test_features, test_target, threshold):
     sessions["predicted"] = (sessions["probability"] >= threshold).astype(int)
 
     groups = []
-    for actual, predicted in zip(sessions["actual"], sessions["predicted"]):
+    for actual, predicted in zip(sessions["actual"], sessions["predicted"], strict=True):
         if actual == 1 and predicted == 1:
             groups.append(CAUGHT_BUYER)
         elif actual == 1 and predicted == 0:
@@ -128,12 +128,12 @@ def plot_error_analysis(sessions, model_name):
     short_labels = [group.replace(" (", "\n(") for group in GROUP_ORDER]
 
     # 1 and 2: box plots of two numerical features.
-    for axis, column in zip([axes[0][0], axes[0][1]], ["PageValues", "ProductRelated_Duration"]):
+    for axis, column in zip([axes[0][0], axes[0][1]], ["PageValues", "ProductRelated_Duration"], strict=True):
         values_per_group = [np.log1p(sessions.loc[sessions["group"] == group, column]) for group in GROUP_ORDER]
         boxes = axis.boxplot(values_per_group, patch_artist=True, showfliers=False)
         axis.set_xticks(range(1, len(GROUP_ORDER) + 1))
         axis.set_xticklabels(short_labels)
-        for box, color in zip(boxes["boxes"], colors):
+        for box, color in zip(boxes["boxes"], colors, strict=True):
             box.set_facecolor(color)
         axis.set_title(column + " by outcome group")
         axis.set_ylabel("log(1 + " + column + ")")

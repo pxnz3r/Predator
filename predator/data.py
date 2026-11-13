@@ -89,7 +89,7 @@ def find_dataset(filename=DATASET_FILENAME):
     # 2. Kaggle copy. The exact sub-folder depends on which dataset was
     #    attached, so we walk through all folders under /kaggle/input/.
     if os.path.isdir(KAGGLE_INPUT_FOLDER):
-        for folder, subfolders, files in os.walk(KAGGLE_INPUT_FOLDER):
+        for folder, _subfolders, files in os.walk(KAGGLE_INPUT_FOLDER):
             if filename in files:
                 return os.path.join(folder, filename)
 
@@ -266,7 +266,7 @@ def plot_class_balance(data):
 
     figure, axis = plt.subplots(figsize=(6, 4))
     bars = axis.bar(labels, counts.values, color=[NO_PURCHASE_COLOR, PURCHASE_COLOR])
-    for bar, count in zip(bars, counts.values):
+    for bar, count in zip(bars, counts.values, strict=True):
         share = count / counts.sum()
         axis.text(bar.get_x() + bar.get_width() / 2, count, "{:,}\n({:.1%})".format(count, share),
                   ha="center", va="bottom")
@@ -306,7 +306,7 @@ def plot_numerical_distributions(data):
         legend = axis.get_legend()
         if legend is not None:
             legend.set_title("")
-            for text, label in zip(legend.texts, ["No purchase", "Purchase"]):
+            for text, label in zip(legend.texts, ["No purchase", "Purchase"], strict=True):
                 text.set_text(label)
 
     figure.suptitle("Numerical features: buyers vs non-buyers (density, top 1% cut)", fontsize=14)

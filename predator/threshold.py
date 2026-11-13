@@ -236,7 +236,7 @@ def plot_profit_curves(training_curves, chosen_thresholds):
     model_names = list(training_curves.keys())
     figure, axes = plt.subplots(1, len(model_names), figsize=(4.6 * len(model_names), 4.4), sharey=True)
 
-    for axis, model_name in zip(axes, model_names):
+    for axis, model_name in zip(axes, model_names, strict=True):
         curve = training_curves[model_name]
         thresholds = chosen_thresholds[model_name]
         color = MODEL_COLORS[model_name]

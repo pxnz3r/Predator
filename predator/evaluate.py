@@ -210,7 +210,7 @@ def plot_confusion_matrices(models, test_features, test_target, threshold=0.5):
         The path of the saved plot.
     """
     figure, axes = plt.subplots(1, len(models), figsize=(4.2 * len(models), 4))
-    for axis, (model_name, pipeline) in zip(axes, models.items()):
+    for axis, (model_name, pipeline) in zip(axes, models.items(), strict=True):
         probabilities = get_purchase_probabilities(pipeline, test_features)
         predictions = (probabilities >= threshold).astype(int)
         ConfusionMatrixDisplay.from_predictions(

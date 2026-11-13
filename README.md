@@ -76,15 +76,16 @@ If the file is missing, `main.py` stops with a message explaining these steps. O
 
 ## Run it
 
-Python 3.10 or newer.
+Python 3.12 or newer. Dependencies are declared in `pyproject.toml` and pinned in `uv.lock`, so [uv](https://docs.astral.sh/uv/) installs the exact versions the results were produced with:
 
 ```bash
 git clone https://github.com/YOUR_GITHUB_USERNAME/Predator.git
 cd Predator
-python -m venv .venv
+uv sync                          # creates .venv with the locked versions
 source .venv/bin/activate        # Windows: .venv\Scripts\activate
-pip install -r requirements.txt
 ```
+
+Without uv: `python -m venv .venv`, activate it, then `pip install -e . --group dev` (pip 25.1 or newer).
 
 | Task | Command |
 |---|---|
@@ -93,6 +94,7 @@ pip install -r requirements.txt
 | Predict one session from a JSON file | `python -m predator.predict examples/session_buyer.json` |
 | Use a specific model | `python -m predator.predict examples/session_browser.json --model "Decision Tree"` |
 | Run the tests | `pytest -q` |
+| Lint and format check | `ruff check . && ruff format --check .` |
 | Open the walkthrough | `jupyter notebook notebooks/predator_walkthrough.ipynb` |
 
 Run `main.py` before the app or the prediction script; they load the models it saves to `models/`.
