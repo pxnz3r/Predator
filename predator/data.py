@@ -168,7 +168,7 @@ def validate_dataset(data):
     print("  Feature columns:", len(ALL_FEATURES))
     print("  Missing values:", missing_values)
     print("  Duplicate rows:", duplicate_rows)
-    print("  Sessions that ended in a purchase: {:.1%}".format(purchase_rate))
+    print(f"  Sessions that ended in a purchase: {purchase_rate:.1%}")
 
     # We keep duplicate rows. In this dataset they are mostly very short
     # sessions (one page, then leave), which really do repeat in real life.
@@ -218,8 +218,8 @@ def split_data(data):
     )
 
     print("\nSplit the data (stratified 80/20):")
-    print("  Training sessions:", len(train_features), "(buyers: {:.1%})".format(train_target.mean()))
-    print("  Test sessions:    ", len(test_features), "(buyers: {:.1%})".format(test_target.mean()))
+    print("  Training sessions:", len(train_features), f"(buyers: {train_target.mean():.1%})")
+    print("  Test sessions:    ", len(test_features), f"(buyers: {test_target.mean():.1%})")
     return train_features, test_features, train_target, test_target
 
 
@@ -268,7 +268,7 @@ def plot_class_balance(data):
     bars = axis.bar(labels, counts.values, color=[NO_PURCHASE_COLOR, PURCHASE_COLOR])
     for bar, count in zip(bars, counts.values, strict=True):
         share = count / counts.sum()
-        axis.text(bar.get_x() + bar.get_width() / 2, count, "{:,}\n({:.1%})".format(count, share),
+        axis.text(bar.get_x() + bar.get_width() / 2, count, f"{count:,}\n({share:.1%})",
                   ha="center", va="bottom")
     axis.set_title("Class balance: most sessions do not buy")
     axis.set_ylabel("Number of sessions")

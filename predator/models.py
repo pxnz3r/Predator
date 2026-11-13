@@ -220,7 +220,7 @@ def make_model(model_name, scale_pos_weight):
     """
     if model_name == DECISION_TREE:
         return make_decision_tree()
-    if model_name == KNN or model_name == KNN_UNDERSAMPLED:
+    if model_name in (KNN, KNN_UNDERSAMPLED):
         return make_knn()
     if model_name == NAIVE_BAYES:
         return make_naive_bayes()

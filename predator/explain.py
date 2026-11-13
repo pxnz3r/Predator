@@ -59,7 +59,7 @@ def plot_tree_feature_importance(tree_pipeline, top_n=15):
     figure, axis = plt.subplots(figsize=(8, 6))
     axis.barh(top_features["feature"], top_features["importance"], color=MODEL_COLORS[DECISION_TREE])
     axis.set_xlabel("Share of total impurity decrease")
-    axis.set_title("Decision Tree feature importance (top {})".format(top_n))
+    axis.set_title(f"Decision Tree feature importance (top {top_n})")
     save_figure(figure, "tree_feature_importance.png")
     return importance_table
 
@@ -96,8 +96,7 @@ def plot_top_of_tree(tree_pipeline, max_depth=3):
         fontsize=10,
         ax=axis,
     )
-    axis.set_title("Top {} levels of the trained Decision Tree (full depth: {}, leaves: {})".format(
-        max_depth, tree_model.get_depth(), tree_model.get_n_leaves()), fontsize=14)
+    axis.set_title(f"Top {max_depth} levels of the trained Decision Tree (full depth: {tree_model.get_depth()}, leaves: {tree_model.get_n_leaves()})", fontsize=14)
     return save_figure(figure, "decision_tree_top_levels.png")
 
 
@@ -395,12 +394,12 @@ def describe_decision_path(tree_pipeline, session):
         if original_feature is not None:
             category = feature_name[len(original_feature) + 1:]
             if goes_left:
-                rules.append("{} is not {}".format(original_feature, category))
+                rules.append(f"{original_feature} is not {category}")
             else:
-                rules.append("{} is {}".format(original_feature, category))
+                rules.append(f"{original_feature} is {category}")
         else:
             if goes_left:
-                rules.append("{} is {:.2f}, which is <= {:.2f}".format(feature_name, session_value, split_value))
+                rules.append(f"{feature_name} is {session_value:.2f}, which is <= {split_value:.2f}")
             else:
-                rules.append("{} is {:.2f}, which is > {:.2f}".format(feature_name, session_value, split_value))
+                rules.append(f"{feature_name} is {session_value:.2f}, which is > {split_value:.2f}")
     return rules

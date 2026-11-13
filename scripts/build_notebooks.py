@@ -258,7 +258,7 @@ display(Markdown(open("outputs/error_analysis.md").read()))""",
 
 WALKTHROUGH_NOTE = """> This walkthrough imports the code from the `predator/` package. Run `python main.py` for the same pipeline in one command, and `streamlit run app.py` for the demo app."""
 
-KAGGLE_NOTE = """> **Full project on GitHub:** [{github}]({github}) (the `predator` package, tests, documentation and a **Streamlit demo app**). This notebook is a self-contained version: all the code is included below.""".format(github=GITHUB_LINK)
+KAGGLE_NOTE = f"""> **Full project on GitHub:** [{GITHUB_LINK}]({GITHUB_LINK}) (the `predator` package, tests, documentation and a **Streamlit demo app**). This notebook is a self-contained version: all the code is included below."""
 
 WALKTHROUGH_SETUP = """# Run from the project folder so data/ and outputs/ are found.
 if os.path.basename(os.getcwd()) == "notebooks":
@@ -285,8 +285,8 @@ def build_notebook(for_kaggle):
         if for_kaggle and section.get("module"):
             module_name = section["module"]
             cells.append(nbformat.v4.new_markdown_cell(
-                "<details><summary>The code below is <code>predator/{}.py</code> from the GitHub repo.</summary>"
-                "Each function has a docstring and comments explaining the method.</details>".format(module_name)))
+                f"<details><summary>The code below is <code>predator/{module_name}.py</code> from the GitHub repo.</summary>"
+                "Each function has a docstring and comments explaining the method.</details>"))
             cells.append(nbformat.v4.new_code_cell(read_module_without_package_imports(module_name)))
 
         code_parts = []

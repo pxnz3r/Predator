@@ -49,5 +49,6 @@ extend-exclude = ["*.ipynb"]
 [tool.ruff.lint]
 select = ["E", "F", "W", "B", "UP", "I", "SIM"]
 # The code is written in a beginner-student style on purpose: explicit
-# if/else blocks are kept instead of one-line ternaries.
-ignore = ["SIM108"]
+# if/else blocks and loops are kept instead of ternaries and all()/any().
+# Line length is left to the formatter; long strings and comments are fine.
+ignore = ["SIM108", "SIM110", "E501"]

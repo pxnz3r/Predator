@@ -181,7 +181,7 @@ def plot_probability_histogram(sessions, threshold, model_name):
               color=GROUP_COLORS[CORRECT_NON_BUYER], label="Did not buy")
     axis.hist(sessions.loc[sessions["actual"] == 1, "probability"], bins=bins, alpha=0.7,
               color=GROUP_COLORS[CAUGHT_BUYER], label="Bought")
-    axis.axvline(threshold, color="black", linestyle="--", label="Threshold {:.2f}".format(threshold))
+    axis.axvline(threshold, color="black", linestyle="--", label=f"Threshold {threshold:.2f}")
     axis.set_yscale("log")
     axis.set_xlabel("Predicted purchase probability")
     axis.set_ylabel("Number of sessions (log scale)")
@@ -221,14 +221,14 @@ def write_error_findings(sessions, numerical_summary, model_name, threshold):
     missed_new = visitor_shares.loc[MISSED_BUYER].get("New_Visitor", 0.0)
     caught_new = visitor_shares.loc[CAUGHT_BUYER].get("New_Visitor", 0.0)
     if abs(missed_new - caught_new) < 0.05:
-        visitor_sentence = ("**Visitor type is not the reason.** {:.0%} of missed buyers are new visitors, "
-                            "about the same as caught buyers ({:.0%}).").format(missed_new, caught_new)
+        visitor_sentence = (f"**Visitor type is not the reason.** {missed_new:.0%} of missed buyers are new visitors, "
+                            f"about the same as caught buyers ({caught_new:.0%}).")
     else:
-        visitor_sentence = ("**Visitor type.** {:.0%} of missed buyers are new visitors, against {:.0%} "
-                            "of caught buyers.").format(missed_new, caught_new)
+        visitor_sentence = (f"**Visitor type.** {missed_new:.0%} of missed buyers are new visitors, against {caught_new:.0%} "
+                            "of caught buyers.")
 
     text = (
-        "# Error analysis: " + model_name + " (threshold {:.2f})\n\n".format(threshold)
+        "# Error analysis: " + model_name + f" (threshold {threshold:.2f})\n\n"
         + "| Group | Sessions | Mean PageValues | Share with PageValues = 0 | Median product time (s) "
           "| Mean ExitRates | Mean probability |\n"
         + "|---|---|---|---|---|---|---|\n"
@@ -301,7 +301,7 @@ def run_error_analysis(pipeline, model_name, test_features, test_target, thresho
     Returns:
         The labelled sessions DataFrame.
     """
-    print("\nError analysis of " + model_name + " at threshold {:.2f}...".format(threshold))
+    print("\nError analysis of " + model_name + f" at threshold {threshold:.2f}...")
     sessions = label_prediction_groups(pipeline, test_features, test_target, threshold)
 
     numerical_summary = summarise_numerical_features(sessions)

@@ -1,7 +1,6 @@
 """Tests for predator/data.py: the dataset loads and looks right."""
 
 import pytest
-
 from helpers import get_dataset
 
 from predator.data import ALL_FEATURES, TARGET_COLUMN, load_dataset, split_data, validate_dataset

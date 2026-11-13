@@ -127,8 +127,8 @@ def build_comparison_table(models, training_results, test_features, test_target,
             "=" * 60 + "\n" + model_name + "\n" + "=" * 60 + "\n"
             + "Confusion matrix (rows = actual, columns = predicted):\n"
             + "                 No purchase  Purchase\n"
-            + "  No purchase    {:>11}  {:>8}\n".format(matrix[0][0], matrix[0][1])
-            + "  Purchase       {:>11}  {:>8}\n\n".format(matrix[1][0], matrix[1][1])
+            + f"  No purchase    {matrix[0][0]:>11}  {matrix[0][1]:>8}\n"
+            + f"  Purchase       {matrix[1][0]:>11}  {matrix[1][1]:>8}\n\n"
             + metrics["report"] + "\n"
         )
         print(section)
@@ -189,7 +189,7 @@ def plot_roc_curves(models, test_features, test_target, filename="roc_curves.png
         false_positive_rate, true_positive_rate, thresholds = roc_curve(test_target, probabilities)
         area = roc_auc_score(test_target, probabilities)
         axis.plot(false_positive_rate, true_positive_rate, color=MODEL_COLORS[model_name],
-                  linewidth=2, label="{} (AUC = {:.3f})".format(model_name, area))
+                  linewidth=2, label=f"{model_name} (AUC = {area:.3f})")
     axis.plot([0, 1], [0, 1], linestyle="--", color="grey", linewidth=1, label="Random guess")
     axis.set_xlabel("False positive rate (non-buyers wrongly flagged)")
     axis.set_ylabel("True positive rate (buyers found)")
@@ -218,7 +218,7 @@ def plot_confusion_matrices(models, test_features, test_target, threshold=0.5):
             cmap="Blues", colorbar=False, ax=axis,
         )
         axis.set_title(model_name)
-    figure.suptitle("Confusion matrices on the test set (threshold {})".format(threshold))
+    figure.suptitle(f"Confusion matrices on the test set (threshold {threshold})")
     figure.tight_layout()
     return save_figure(figure, "confusion_matrices.png")
 

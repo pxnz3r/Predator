@@ -38,7 +38,7 @@ def print_step(number, title):
         Nothing.
     """
     print("\n" + "#" * 70)
-    print("# STEP {}: {}".format(number, title))
+    print(f"# STEP {number}: {title}")
     print("#" * 70)
 
 
@@ -172,7 +172,7 @@ def main():
     print("  Saved", train.save_model_info(model_info))
 
     minutes = (time.time() - start_time) / 60
-    print("\nDone in {:.1f} minutes. Figures are in outputs/figures/, tables in outputs/.".format(minutes))
+    print(f"\nDone in {minutes:.1f} minutes. Figures are in outputs/figures/, tables in outputs/.")
     print("Next: streamlit run app.py")
     return 0
 

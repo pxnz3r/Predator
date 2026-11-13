@@ -205,9 +205,9 @@ def show_prediction_page(model_info, models, model_name, threshold):
         st.caption("Model: " + model_name + " | default 0.5 cutoff says: " + result["label"])
     with column_decision:
         if result["passes_threshold"]:
-            st.success("Above the business threshold ({:.2f}): send the discount offer.".format(threshold))
+            st.success(f"Above the business threshold ({threshold:.2f}): send the discount offer.")
         else:
-            st.warning("Below the business threshold ({:.2f}): do not send the offer.".format(threshold))
+            st.warning(f"Below the business threshold ({threshold:.2f}): do not send the offer.")
         if model_name == "Naive Bayes (baseline)":
             st.info("Naive Bayes gives extreme, badly calibrated probabilities on this data. "
                     "Treat it as a baseline only.")
@@ -223,7 +223,7 @@ def show_prediction_page(model_info, models, model_name, threshold):
         st.subheader("Decision path for this session")
         rules = describe_decision_path(models[DECISION_TREE], session)
         for step_number, rule in enumerate(rules, start=1):
-            st.markdown("{}. {}".format(step_number, rule))
+            st.markdown(f"{step_number}. {rule}")
         st.caption("The questions the Decision Tree asked, from the root to the leaf that made this prediction.")
     else:
         st.caption("Pick the Decision Tree in the sidebar to see the exact rules it followed for this session.")

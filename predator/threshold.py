@@ -175,8 +175,7 @@ def tune_thresholds(models, training_results, train_target, test_features, test_
     """
     print("\nTuning decision thresholds (business angle)...")
     values = profit_per_outcome()
-    print("  Assumptions: order profit ${:.0f}, offer cost ${:.0f}, offer conversion boost {:.0%}".format(
-        AVERAGE_ORDER_PROFIT, OFFER_COST, OFFER_CONVERSION_BOOST))
+    print(f"  Assumptions: order profit ${AVERAGE_ORDER_PROFIT:.0f}, offer cost ${OFFER_COST:.0f}, offer conversion boost {OFFER_CONVERSION_BOOST:.0%}")
     print("  Profit per true positive: ${:.2f}, per false positive: ${:.2f}".format(values["tp"], values["fp"]))
 
     rows = []
@@ -212,7 +211,7 @@ def tune_thresholds(models, training_results, train_target, test_features, test_
 
     comparison_table = pd.DataFrame(rows).round(3)
     comparison_table.to_csv(os.path.join(OUTPUTS_FOLDER, "threshold_comparison.csv"), index=False)
-    print("\nThreshold comparison on the test set ({} sessions):".format(len(test_target)))
+    print(f"\nThreshold comparison on the test set ({len(test_target)} sessions):")
     print(comparison_table.to_string(index=False))
     return comparison_table, chosen_thresholds, training_curves
 

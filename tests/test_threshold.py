@@ -3,7 +3,12 @@
 import numpy as np
 
 from predator import threshold
-from predator.threshold import build_threshold_curve, calculate_profit, find_best_thresholds, profit_per_outcome
+from predator.threshold import (
+    build_threshold_curve,
+    calculate_profit,
+    find_best_thresholds,
+    profit_per_outcome,
+)
 
 
 def test_profit_counts_each_outcome():
