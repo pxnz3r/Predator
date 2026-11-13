@@ -237,7 +237,7 @@ def show_table(title, file_name):
     path = os.path.join(OUTPUTS_FOLDER, file_name)
     if os.path.isfile(path):
         st.subheader(title)
-        st.dataframe(pd.read_csv(path), hide_index=True, use_container_width=True)
+        st.dataframe(pd.read_csv(path), hide_index=True, width="stretch")
 
 
 def show_figure(caption, file_name):
@@ -252,7 +252,7 @@ def show_figure(caption, file_name):
     """
     path = os.path.join(FIGURES_FOLDER, file_name)
     if os.path.isfile(path):
-        st.image(path, caption=caption, use_container_width=True)
+        st.image(path, caption=caption, width="stretch")
 
 
 def show_comparison_page(model_info):
