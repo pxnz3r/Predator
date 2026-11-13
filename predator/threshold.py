@@ -100,8 +100,12 @@ def calculate_profit(true_target, probabilities, threshold):
     true_negatives = int(((predictions == 0) & (true_target == 0)).sum())
 
     values = profit_per_outcome()
-    total_profit = (true_positives * values["tp"] + false_positives * values["fp"]
-                    + false_negatives * values["fn"] + true_negatives * values["tn"])
+    total_profit = (
+        true_positives * values["tp"]
+        + false_positives * values["fp"]
+        + false_negatives * values["fn"]
+        + true_negatives * values["tn"]
+    )
     missed_profit = false_negatives * (AVERAGE_ORDER_PROFIT * OFFER_CONVERSION_BOOST - OFFER_COST)
 
     return {
@@ -130,13 +134,15 @@ def build_threshold_curve(true_target, probabilities):
     for threshold in THRESHOLDS_TO_TRY:
         predictions = (probabilities >= threshold).astype(int)
         profit_result = calculate_profit(true_target, probabilities, threshold)
-        rows.append({
-            "threshold": threshold,
-            "profit": profit_result["profit"],
-            "precision": precision_score(true_target, predictions, zero_division=0),
-            "recall": recall_score(true_target, predictions, zero_division=0),
-            "f1": f1_score(true_target, predictions, zero_division=0),
-        })
+        rows.append(
+            {
+                "threshold": threshold,
+                "profit": profit_result["profit"],
+                "precision": precision_score(true_target, predictions, zero_division=0),
+                "recall": recall_score(true_target, predictions, zero_division=0),
+                "f1": f1_score(true_target, predictions, zero_division=0),
+            }
+        )
     return pd.DataFrame(rows)
 
 
@@ -175,8 +181,12 @@ def tune_thresholds(models, training_results, train_target, test_features, test_
     """
     print("\nTuning decision thresholds (business angle)...")
     values = profit_per_outcome()
-    print(f"  Assumptions: order profit ${AVERAGE_ORDER_PROFIT:.0f}, offer cost ${OFFER_COST:.0f}, offer conversion boost {OFFER_CONVERSION_BOOST:.0%}")
-    print("  Profit per true positive: ${:.2f}, per false positive: ${:.2f}".format(values["tp"], values["fp"]))
+    print(
+        f"  Assumptions: order profit ${AVERAGE_ORDER_PROFIT:.0f}, offer cost ${OFFER_COST:.0f}, offer conversion boost {OFFER_CONVERSION_BOOST:.0%}"
+    )
+    print(
+        "  Profit per true positive: ${:.2f}, per false positive: ${:.2f}".format(values["tp"], values["fp"])
+    )
 
     rows = []
     chosen_thresholds = {}
@@ -194,20 +204,25 @@ def tune_thresholds(models, training_results, train_target, test_features, test_
         }
 
         test_probabilities = get_purchase_probabilities(pipeline, test_features)
-        for label, threshold in [("Default 0.5", 0.5), ("Best F1", best_f1_threshold),
-                                 ("Best profit", best_profit_threshold)]:
+        for label, threshold in [
+            ("Default 0.5", 0.5),
+            ("Best F1", best_f1_threshold),
+            ("Best profit", best_profit_threshold),
+        ]:
             predictions = (test_probabilities >= threshold).astype(int)
             profit_result = calculate_profit(test_target, test_probabilities, threshold)
-            rows.append({
-                "Model": model_name,
-                "Threshold type": label,
-                "Threshold": threshold,
-                "Precision": precision_score(test_target, predictions, zero_division=0),
-                "Recall": recall_score(test_target, predictions, zero_division=0),
-                "F1": f1_score(test_target, predictions, zero_division=0),
-                "Sessions targeted": profit_result["targeted"],
-                "Profit ($)": profit_result["profit"],
-            })
+            rows.append(
+                {
+                    "Model": model_name,
+                    "Threshold type": label,
+                    "Threshold": threshold,
+                    "Precision": precision_score(test_target, predictions, zero_division=0),
+                    "Recall": recall_score(test_target, predictions, zero_division=0),
+                    "F1": f1_score(test_target, predictions, zero_division=0),
+                    "Sessions targeted": profit_result["targeted"],
+                    "Profit ($)": profit_result["profit"],
+                }
+            )
 
     comparison_table = pd.DataFrame(rows).round(3)
     comparison_table.to_csv(os.path.join(OUTPUTS_FOLDER, "threshold_comparison.csv"), index=False)
@@ -242,10 +257,18 @@ def plot_profit_curves(training_curves, chosen_thresholds):
 
         axis.plot(curve["threshold"], curve["profit"], color=color, linewidth=2, label="Profit")
         axis.axhline(0, color="grey", linewidth=0.8)
-        axis.axvline(thresholds["best_profit"], color=color, linestyle="--",
-                     label="Best profit ({:.2f})".format(thresholds["best_profit"]))
-        axis.axvline(thresholds["best_f1"], color="black", linestyle=":",
-                     label="Best F1 ({:.2f})".format(thresholds["best_f1"]))
+        axis.axvline(
+            thresholds["best_profit"],
+            color=color,
+            linestyle="--",
+            label="Best profit ({:.2f})".format(thresholds["best_profit"]),
+        )
+        axis.axvline(
+            thresholds["best_f1"],
+            color="black",
+            linestyle=":",
+            label="Best F1 ({:.2f})".format(thresholds["best_f1"]),
+        )
         axis.axvline(0.5, color="grey", linestyle="-.", linewidth=1, label="Default 0.5")
         axis.set_title(model_name, fontsize=11)
         axis.set_xlabel("Threshold")

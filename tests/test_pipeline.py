@@ -13,8 +13,9 @@ def test_every_model_pipeline_fits_and_predicts():
     features = small_sample[ALL_FEATURES]
     target = small_sample[TARGET_COLUMN]
     for model_name in MODEL_NAMES:
-        pipeline = build_pipeline(make_model(model_name, scale_pos_weight=5.0),
-                                  scale_numbers=uses_scaling(model_name))
+        pipeline = build_pipeline(
+            make_model(model_name, scale_pos_weight=5.0), scale_numbers=uses_scaling(model_name)
+        )
         pipeline.fit(features, target)
         probabilities = pipeline.predict_proba(features)[:, 1]
         assert len(probabilities) == len(features)

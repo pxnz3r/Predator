@@ -126,8 +126,12 @@ def load_model_by_name(model_name, model_info, folder=MODELS_FOLDER):
         The fitted pipeline.
     """
     if model_name not in model_info["model_files"]:
-        raise ValueError("Unknown model '" + model_name + "'. Choose one of: "
-                         + ", ".join(model_info["model_files"].keys()))
+        raise ValueError(
+            "Unknown model '"
+            + model_name
+            + "'. Choose one of: "
+            + ", ".join(model_info["model_files"].keys())
+        )
     path = os.path.join(folder, model_info["model_files"][model_name])
     if not os.path.isfile(path):
         raise FileNotFoundError(path + " not found. Run 'python main.py' first.")

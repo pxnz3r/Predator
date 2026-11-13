@@ -284,9 +284,12 @@ def build_notebook(for_kaggle):
 
         if for_kaggle and section.get("module"):
             module_name = section["module"]
-            cells.append(nbformat.v4.new_markdown_cell(
-                f"<details><summary>The code below is <code>predator/{module_name}.py</code> from the GitHub repo.</summary>"
-                "Each function has a docstring and comments explaining the method.</details>"))
+            cells.append(
+                nbformat.v4.new_markdown_cell(
+                    f"<details><summary>The code below is <code>predator/{module_name}.py</code> from the GitHub repo.</summary>"
+                    "Each function has a docstring and comments explaining the method.</details>"
+                )
+            )
             cells.append(nbformat.v4.new_code_cell(read_module_without_package_imports(module_name)))
 
         code_parts = []

@@ -129,7 +129,9 @@ def plot_error_analysis(sessions, model_name):
 
     # 1 and 2: box plots of two numerical features.
     for axis, column in zip([axes[0][0], axes[0][1]], ["PageValues", "ProductRelated_Duration"], strict=True):
-        values_per_group = [np.log1p(sessions.loc[sessions["group"] == group, column]) for group in GROUP_ORDER]
+        values_per_group = [
+            np.log1p(sessions.loc[sessions["group"] == group, column]) for group in GROUP_ORDER
+        ]
         boxes = axis.boxplot(values_per_group, patch_artist=True, showfliers=False)
         axis.set_xticks(range(1, len(GROUP_ORDER) + 1))
         axis.set_xticklabels(short_labels)
@@ -150,8 +152,14 @@ def plot_error_analysis(sessions, model_name):
     # 4: Month share for the three groups that matter most.
     month_shares = summarise_categorical_feature(sessions, "Month")
     for group in [CAUGHT_BUYER, MISSED_BUYER, FALSE_ALARM]:
-        axes[1][1].plot(month_shares.columns, month_shares.loc[group], marker="o",
-                        color=GROUP_COLORS[group], linewidth=2, label=group)
+        axes[1][1].plot(
+            month_shares.columns,
+            month_shares.loc[group],
+            marker="o",
+            color=GROUP_COLORS[group],
+            linewidth=2,
+            label=group,
+        )
     axes[1][1].set_title("Month within each group")
     axes[1][1].set_ylabel("Share of the group")
     axes[1][1].legend()
@@ -177,10 +185,20 @@ def plot_probability_histogram(sessions, threshold, model_name):
     """
     figure, axis = plt.subplots(figsize=(9, 5))
     bins = np.linspace(0, 1, 41)
-    axis.hist(sessions.loc[sessions["actual"] == 0, "probability"], bins=bins, alpha=0.7,
-              color=GROUP_COLORS[CORRECT_NON_BUYER], label="Did not buy")
-    axis.hist(sessions.loc[sessions["actual"] == 1, "probability"], bins=bins, alpha=0.7,
-              color=GROUP_COLORS[CAUGHT_BUYER], label="Bought")
+    axis.hist(
+        sessions.loc[sessions["actual"] == 0, "probability"],
+        bins=bins,
+        alpha=0.7,
+        color=GROUP_COLORS[CORRECT_NON_BUYER],
+        label="Did not buy",
+    )
+    axis.hist(
+        sessions.loc[sessions["actual"] == 1, "probability"],
+        bins=bins,
+        alpha=0.7,
+        color=GROUP_COLORS[CAUGHT_BUYER],
+        label="Bought",
+    )
     axis.axvline(threshold, color="black", linestyle="--", label=f"Threshold {threshold:.2f}")
     axis.set_yscale("log")
     axis.set_xlabel("Predicted purchase probability")
@@ -221,23 +239,34 @@ def write_error_findings(sessions, numerical_summary, model_name, threshold):
     missed_new = visitor_shares.loc[MISSED_BUYER].get("New_Visitor", 0.0)
     caught_new = visitor_shares.loc[CAUGHT_BUYER].get("New_Visitor", 0.0)
     if abs(missed_new - caught_new) < 0.05:
-        visitor_sentence = (f"**Visitor type is not the reason.** {missed_new:.0%} of missed buyers are new visitors, "
-                            f"about the same as caught buyers ({caught_new:.0%}).")
+        visitor_sentence = (
+            f"**Visitor type is not the reason.** {missed_new:.0%} of missed buyers are new visitors, "
+            f"about the same as caught buyers ({caught_new:.0%})."
+        )
     else:
-        visitor_sentence = (f"**Visitor type.** {missed_new:.0%} of missed buyers are new visitors, against {caught_new:.0%} "
-                            "of caught buyers.")
+        visitor_sentence = (
+            f"**Visitor type.** {missed_new:.0%} of missed buyers are new visitors, against {caught_new:.0%} "
+            "of caught buyers."
+        )
 
     text = (
-        "# Error analysis: " + model_name + f" (threshold {threshold:.2f})\n\n"
+        "# Error analysis: "
+        + model_name
+        + f" (threshold {threshold:.2f})\n\n"
         + "| Group | Sessions | Mean PageValues | Share with PageValues = 0 | Median product time (s) "
-          "| Mean ExitRates | Mean probability |\n"
-        + "|---|---|---|---|---|---|---|\n"
+        "| Mean ExitRates | Mean probability |\n" + "|---|---|---|---|---|---|---|\n"
     )
     for group in GROUP_ORDER:
         row = numerical_summary.loc[group]
         text = text + "| {} | {:.0f} | {:.1f} | {:.0%} | {:.0f} | {:.3f} | {:.2f} |\n".format(
-            group, row["sessions"], row["PageValues"], row["share with PageValues = 0"],
-            row["median ProductRelated_Duration"], row["ExitRates"], row["probability"])
+            group,
+            row["sessions"],
+            row["PageValues"],
+            row["share with PageValues = 0"],
+            row["median ProductRelated_Duration"],
+            row["ExitRates"],
+            row["probability"],
+        )
 
     text = text + (
         "\n## What the missed buyers have in common\n\n"
@@ -267,16 +296,21 @@ def write_error_findings(sessions, numerical_summary, model_name, threshold):
         "PageValues points the wrong way. More data about the visitor (past orders, cart "
         "contents) would be needed to fix them; tuning the model further cannot.\n"
     ).format(
-        missed_zero=missed["share with PageValues = 0"], caught_zero=caught["share with PageValues = 0"],
+        missed_zero=missed["share with PageValues = 0"],
+        caught_zero=caught["share with PageValues = 0"],
         missed_prob=missed["probability"],
-        missed_time=missed["median ProductRelated_Duration"], caught_time=caught["median ProductRelated_Duration"],
-        missed_exit=missed["ExitRates"], caught_exit=caught["ExitRates"],
+        missed_time=missed["median ProductRelated_Duration"],
+        caught_time=caught["median ProductRelated_Duration"],
+        missed_exit=missed["ExitRates"],
+        caught_exit=caught["ExitRates"],
         visitor_sentence=visitor_sentence,
         missed_month=missed_month,
         missed_month_share=month_shares.loc[MISSED_BUYER, missed_month],
         missed_month_caught=month_shares.loc[CAUGHT_BUYER, missed_month],
-        fa_pv=false_alarm["PageValues"], caught_pv=caught["PageValues"],
-        fa_zero=false_alarm["share with PageValues = 0"], fa_month=false_alarm_month,
+        fa_pv=false_alarm["PageValues"],
+        caught_pv=caught["PageValues"],
+        fa_zero=false_alarm["share with PageValues = 0"],
+        fa_month=false_alarm_month,
         fa_month_share=month_shares.loc[FALSE_ALARM, false_alarm_month],
         fa_month_caught=month_shares.loc[CAUGHT_BUYER, false_alarm_month],
         fa_returning=visitor_shares.loc[FALSE_ALARM].get("Returning_Visitor", 0.0),
@@ -306,8 +340,19 @@ def run_error_analysis(pipeline, model_name, test_features, test_target, thresho
 
     numerical_summary = summarise_numerical_features(sessions)
     print("\nAverage feature values per group:")
-    print(numerical_summary[["sessions", "PageValues", "share with PageValues = 0",
-                             "ProductRelated_Duration", "ExitRates", "BounceRates", "probability"]].to_string())
+    print(
+        numerical_summary[
+            [
+                "sessions",
+                "PageValues",
+                "share with PageValues = 0",
+                "ProductRelated_Duration",
+                "ExitRates",
+                "BounceRates",
+                "probability",
+            ]
+        ].to_string()
+    )
 
     category_tables = []
     for column in ["VisitorType", "Month", "Weekend"]:
@@ -315,7 +360,9 @@ def run_error_analysis(pipeline, model_name, test_features, test_target, thresho
         shares.columns = [column + " = " + str(value) for value in shares.columns]
         category_tables.append(shares)
     category_summary = pd.concat(category_tables, axis=1)
-    category_summary.to_csv(os.path.join(OUTPUTS_FOLDER, "error_categorical_summary.csv"), index_label="group")
+    category_summary.to_csv(
+        os.path.join(OUTPUTS_FOLDER, "error_categorical_summary.csv"), index_label="group"
+    )
 
     plot_error_analysis(sessions, model_name)
     plot_probability_histogram(sessions, threshold, model_name)

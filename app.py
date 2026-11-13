@@ -123,15 +123,34 @@ def number_input(feature, start_values, model_info, key_prefix):
     """
     lowest, highest = model_info["feature_ranges"][feature]
     if feature in COUNT_FEATURES:
-        return st.number_input(feature, min_value=0, max_value=int(highest * 2),
-                               value=int(start_values[feature]), step=1,
-                               help=FEATURE_HELP[feature], key=key_prefix + feature)
+        return st.number_input(
+            feature,
+            min_value=0,
+            max_value=int(highest * 2),
+            value=int(start_values[feature]),
+            step=1,
+            help=FEATURE_HELP[feature],
+            key=key_prefix + feature,
+        )
     if feature in ["BounceRates", "ExitRates", "SpecialDay"]:
-        return st.number_input(feature, min_value=0.0, max_value=float(highest),
-                               value=float(start_values[feature]), step=0.01, format="%.3f",
-                               help=FEATURE_HELP[feature], key=key_prefix + feature)
-    return st.number_input(feature, min_value=0.0, value=float(start_values[feature]), step=10.0,
-                           help=FEATURE_HELP[feature], key=key_prefix + feature)
+        return st.number_input(
+            feature,
+            min_value=0.0,
+            max_value=float(highest),
+            value=float(start_values[feature]),
+            step=0.01,
+            format="%.3f",
+            help=FEATURE_HELP[feature],
+            key=key_prefix + feature,
+        )
+    return st.number_input(
+        feature,
+        min_value=0.0,
+        value=float(start_values[feature]),
+        step=10.0,
+        help=FEATURE_HELP[feature],
+        key=key_prefix + feature,
+    )
 
 
 def choice_input(feature, start_values, model_info, key_prefix):
@@ -152,8 +171,9 @@ def choice_input(feature, start_values, model_info, key_prefix):
         options = [month for month in month_order if month in options]
     start_value = start_values[feature]
     start_index = options.index(start_value) if start_value in options else 0
-    return st.selectbox(feature, options, index=start_index, help=FEATURE_HELP[feature],
-                        key=key_prefix + feature)
+    return st.selectbox(
+        feature, options, index=start_index, help=FEATURE_HELP[feature], key=key_prefix + feature
+    )
 
 
 def show_prediction_page(model_info, models, model_name, threshold):
@@ -168,10 +188,13 @@ def show_prediction_page(model_info, models, model_name, threshold):
     Returns:
         Nothing (draws on the page).
     """
-    start_choice = st.radio("Start from", ["Typical session", "Example buyer", "Example browser"],
-                            horizontal=True,
-                            help="Typical session = median/most common values from the training data. "
-                                 "The examples are real sessions from the dataset.")
+    start_choice = st.radio(
+        "Start from",
+        ["Typical session", "Example buyer", "Example browser"],
+        horizontal=True,
+        help="Typical session = median/most common values from the training data. "
+        "The examples are real sessions from the dataset.",
+    )
     start_values = load_starting_values(start_choice, model_info)
     key_prefix = start_choice + "_"
 
@@ -179,15 +202,25 @@ def show_prediction_page(model_info, models, model_name, threshold):
     column_pages, column_behaviour, column_context = st.columns(3)
     with column_pages:
         st.subheader("Pages visited")
-        for feature in ["Administrative", "Administrative_Duration", "Informational",
-                        "Informational_Duration", "ProductRelated", "ProductRelated_Duration"]:
+        for feature in [
+            "Administrative",
+            "Administrative_Duration",
+            "Informational",
+            "Informational_Duration",
+            "ProductRelated",
+            "ProductRelated_Duration",
+        ]:
             session_values[feature] = number_input(feature, start_values, model_info, key_prefix)
     with column_behaviour:
         st.subheader("Behaviour")
         for feature in ["PageValues", "BounceRates", "ExitRates", "SpecialDay"]:
             session_values[feature] = number_input(feature, start_values, model_info, key_prefix)
-        session_values["Weekend"] = st.checkbox("Weekend", value=bool(start_values["Weekend"]),
-                                                help=FEATURE_HELP["Weekend"], key=key_prefix + "Weekend")
+        session_values["Weekend"] = st.checkbox(
+            "Weekend",
+            value=bool(start_values["Weekend"]),
+            help=FEATURE_HELP["Weekend"],
+            key=key_prefix + "Weekend",
+        )
     with column_context:
         st.subheader("Visit context")
         for feature in ["Month", "VisitorType", "TrafficType", "Region", "Browser", "OperatingSystems"]:
@@ -209,24 +242,32 @@ def show_prediction_page(model_info, models, model_name, threshold):
         else:
             st.warning(f"Below the business threshold ({threshold:.2f}): do not send the offer.")
         if model_name == "Naive Bayes (baseline)":
-            st.info("Naive Bayes gives extreme, badly calibrated probabilities on this data. "
-                    "Treat it as a baseline only.")
+            st.info(
+                "Naive Bayes gives extreme, badly calibrated probabilities on this data. "
+                "Treat it as a baseline only."
+            )
 
     st.subheader("What drives this model")
     importance = pd.Series(model_info["permutation_importance"][model_name]).sort_values(ascending=False)
     importance_frame = importance.head(8).rename("Drop in ROC-AUC when shuffled").to_frame()
     st.bar_chart(importance_frame, horizontal=True)
-    st.caption("Permutation importance on the test set: how much the model's ROC-AUC drops when a "
-               "feature's values are shuffled. This describes the model overall, not this one session.")
+    st.caption(
+        "Permutation importance on the test set: how much the model's ROC-AUC drops when a "
+        "feature's values are shuffled. This describes the model overall, not this one session."
+    )
 
     if model_name == DECISION_TREE:
         st.subheader("Decision path for this session")
         rules = describe_decision_path(models[DECISION_TREE], session)
         for step_number, rule in enumerate(rules, start=1):
             st.markdown(f"{step_number}. {rule}")
-        st.caption("The questions the Decision Tree asked, from the root to the leaf that made this prediction.")
+        st.caption(
+            "The questions the Decision Tree asked, from the root to the leaf that made this prediction."
+        )
     else:
-        st.caption("Pick the Decision Tree in the sidebar to see the exact rules it followed for this session.")
+        st.caption(
+            "Pick the Decision Tree in the sidebar to see the exact rules it followed for this session."
+        )
 
 
 def show_table(title, file_name):
@@ -269,8 +310,10 @@ def show_comparison_page(model_info):
     Returns:
         Nothing.
     """
-    st.markdown("Best model by cross-validated F1: **" + model_info["best_model"] + "**. "
-                "XGBoost is a benchmark beyond the course; the Decision Tree and KNN are the main models.")
+    st.markdown(
+        "Best model by cross-validated F1: **" + model_info["best_model"] + "**. "
+        "XGBoost is a benchmark beyond the course; the Decision Tree and KNN are the main models."
+    )
     show_table("Test-set scores (threshold 0.5)", "model_comparison.csv")
     show_figure("ROC curves", "roc_curves.png")
     show_figure("Confusion matrices", "confusion_matrices.png")
@@ -294,7 +337,9 @@ def main():
     st.title("Predator: will this session end in a purchase?")
 
     if not models_are_available():
-        st.error("No trained models found in models/. Train them first by running this in the project folder:")
+        st.error(
+            "No trained models found in models/. Train them first by running this in the project folder:"
+        )
         st.code("python main.py")
         st.stop()
 
@@ -308,18 +353,31 @@ def main():
         model_name = MODEL_NAMES[labels.index(picked_label)]
 
         thresholds = model_info["thresholds"][model_name]
-        threshold = st.slider("Business threshold", min_value=0.01, max_value=0.99,
-                              value=float(thresholds["best_profit"]), step=0.01,
-                              help="Send the offer when the purchase probability is at least this value. "
-                                   "Starts at the threshold that maximised profit on the training data.")
-        st.caption("Best profit: {:.2f} | Best F1: {:.2f} | Default: 0.50".format(
-            thresholds["best_profit"], thresholds["best_f1"]))
+        threshold = st.slider(
+            "Business threshold",
+            min_value=0.01,
+            max_value=0.99,
+            value=float(thresholds["best_profit"]),
+            step=0.01,
+            help="Send the offer when the purchase probability is at least this value. "
+            "Starts at the threshold that maximised profit on the training data.",
+        )
+        st.caption(
+            "Best profit: {:.2f} | Best F1: {:.2f} | Default: 0.50".format(
+                thresholds["best_profit"], thresholds["best_f1"]
+            )
+        )
 
         assumptions = model_info["business_assumptions"]
         st.subheader("Business assumptions")
         st.caption("Illustrative values, set at the top of predator/threshold.py.")
-        st.markdown("- Order profit: ${:.0f}\n- Offer cost: ${:.0f}\n- Offer conversion boost: {:.0%}".format(
-            assumptions["AVERAGE_ORDER_PROFIT"], assumptions["OFFER_COST"], assumptions["OFFER_CONVERSION_BOOST"]))
+        st.markdown(
+            "- Order profit: ${:.0f}\n- Offer cost: ${:.0f}\n- Offer conversion boost: {:.0%}".format(
+                assumptions["AVERAGE_ORDER_PROFIT"],
+                assumptions["OFFER_COST"],
+                assumptions["OFFER_CONVERSION_BOOST"],
+            )
+        )
 
     prediction_tab, comparison_tab = st.tabs(["Predict a session", "Model comparison"])
     with prediction_tab:

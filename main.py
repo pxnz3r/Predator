@@ -57,8 +57,9 @@ def to_plain_value(value):
     return value
 
 
-def build_model_info(best_model_name, chosen_thresholds, train_features, comparison_table,
-                     importance_table, training_results):
+def build_model_info(
+    best_model_name, chosen_thresholds, train_features, comparison_table, importance_table, training_results
+):
     """
     Collect everything predict.py and app.py need into one dictionary.
 
@@ -81,7 +82,9 @@ def build_model_info(best_model_name, chosen_thresholds, train_features, compari
     category_options = {}
     for column in data.CATEGORICAL_FEATURES:
         default_values[column] = to_plain_value(train_features[column].mode()[0])
-        category_options[column] = [to_plain_value(value) for value in sorted(train_features[column].unique())]
+        category_options[column] = [
+            to_plain_value(value) for value in sorted(train_features[column].unique())
+        ]
 
     permutation_importance = {}
     for model_name in importance_table.columns:
@@ -152,23 +155,32 @@ def main():
     explain.write_tree_vs_xgboost_comparison(comparison_table, models, importance_table)
 
     print_step(6, "Ablation: retrain every model without PageValues")
-    explain.run_ablation(train_features, train_target, test_features, test_target,
-                         comparison_table, importance_table)
+    explain.run_ablation(
+        train_features, train_target, test_features, test_target, comparison_table, importance_table
+    )
 
     print_step(7, "Business threshold tuning")
     threshold_table, chosen_thresholds, training_curves = threshold.tune_thresholds(
-        models, training_results, train_target, test_features, test_target)
+        models, training_results, train_target, test_features, test_target
+    )
     threshold.plot_profit_curves(training_curves, chosen_thresholds)
 
     print_step(8, "Error analysis of the best model")
     best_threshold = chosen_thresholds[best_model_name]["best_profit"]
-    errors.run_error_analysis(models[best_model_name], best_model_name,
-                              test_features, test_target, best_threshold)
+    errors.run_error_analysis(
+        models[best_model_name], best_model_name, test_features, test_target, best_threshold
+    )
 
     print_step(9, "Save the models")
     train.save_models(training_results)
-    model_info = build_model_info(best_model_name, chosen_thresholds, train_features,
-                                  comparison_table, importance_table, training_results)
+    model_info = build_model_info(
+        best_model_name,
+        chosen_thresholds,
+        train_features,
+        comparison_table,
+        importance_table,
+        training_results,
+    )
     print("  Saved", train.save_model_info(model_info))
 
     minutes = (time.time() - start_time) / 60

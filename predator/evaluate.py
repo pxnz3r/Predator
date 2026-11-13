@@ -81,8 +81,9 @@ def evaluate_model(model_name, pipeline, test_features, test_target, threshold=0
         "f1": f1_score(test_target, predictions),
         "roc_auc": roc_auc_score(test_target, probabilities),
         "confusion_matrix": confusion_matrix(test_target, predictions),
-        "report": classification_report(test_target, predictions,
-                                        target_names=["No purchase", "Purchase"], digits=3),
+        "report": classification_report(
+            test_target, predictions, target_names=["No purchase", "Purchase"], digits=3
+        ),
     }
     return metrics
 
@@ -111,25 +112,33 @@ def build_comparison_table(models, training_results, test_features, test_target,
 
     for model_name, pipeline in models.items():
         metrics = evaluate_model(model_name, pipeline, test_features, test_target)
-        rows.append({
-            "Model": model_name,
-            "Role": MODEL_ROLES[model_name],
-            "CV F1": training_results[model_name]["cv_f1"],
-            "Accuracy": metrics["accuracy"],
-            "Precision": metrics["precision"],
-            "Recall": metrics["recall"],
-            "F1": metrics["f1"],
-            "ROC-AUC": metrics["roc_auc"],
-        })
+        rows.append(
+            {
+                "Model": model_name,
+                "Role": MODEL_ROLES[model_name],
+                "CV F1": training_results[model_name]["cv_f1"],
+                "Accuracy": metrics["accuracy"],
+                "Precision": metrics["precision"],
+                "Recall": metrics["recall"],
+                "F1": metrics["f1"],
+                "ROC-AUC": metrics["roc_auc"],
+            }
+        )
 
         matrix = metrics["confusion_matrix"]
         section = (
-            "=" * 60 + "\n" + model_name + "\n" + "=" * 60 + "\n"
+            "=" * 60
+            + "\n"
+            + model_name
+            + "\n"
+            + "=" * 60
+            + "\n"
             + "Confusion matrix (rows = actual, columns = predicted):\n"
             + "                 No purchase  Purchase\n"
             + f"  No purchase    {matrix[0][0]:>11}  {matrix[0][1]:>8}\n"
             + f"  Purchase       {matrix[1][0]:>11}  {matrix[1][1]:>8}\n\n"
-            + metrics["report"] + "\n"
+            + metrics["report"]
+            + "\n"
         )
         print(section)
         report_text = report_text + section
@@ -159,8 +168,9 @@ def choose_best_model(comparison_table):
         The name of the best model.
     """
     best_row = comparison_table.sort_values("CV F1", ascending=False).iloc[0]
-    print("\nBest model by cross-validated F1:", best_row["Model"],
-          "(CV F1 = {:.3f})".format(best_row["CV F1"]))
+    print(
+        "\nBest model by cross-validated F1:", best_row["Model"], "(CV F1 = {:.3f})".format(best_row["CV F1"])
+    )
     return best_row["Model"]
 
 
@@ -188,8 +198,13 @@ def plot_roc_curves(models, test_features, test_target, filename="roc_curves.png
         # rate and true positive rate at each one.
         false_positive_rate, true_positive_rate, thresholds = roc_curve(test_target, probabilities)
         area = roc_auc_score(test_target, probabilities)
-        axis.plot(false_positive_rate, true_positive_rate, color=MODEL_COLORS[model_name],
-                  linewidth=2, label=f"{model_name} (AUC = {area:.3f})")
+        axis.plot(
+            false_positive_rate,
+            true_positive_rate,
+            color=MODEL_COLORS[model_name],
+            linewidth=2,
+            label=f"{model_name} (AUC = {area:.3f})",
+        )
     axis.plot([0, 1], [0, 1], linestyle="--", color="grey", linewidth=1, label="Random guess")
     axis.set_xlabel("False positive rate (non-buyers wrongly flagged)")
     axis.set_ylabel("True positive rate (buyers found)")
@@ -214,8 +229,12 @@ def plot_confusion_matrices(models, test_features, test_target, threshold=0.5):
         probabilities = get_purchase_probabilities(pipeline, test_features)
         predictions = (probabilities >= threshold).astype(int)
         ConfusionMatrixDisplay.from_predictions(
-            test_target, predictions, display_labels=["No buy", "Buy"],
-            cmap="Blues", colorbar=False, ax=axis,
+            test_target,
+            predictions,
+            display_labels=["No buy", "Buy"],
+            cmap="Blues",
+            colorbar=False,
+            ax=axis,
         )
         axis.set_title(model_name)
     figure.suptitle(f"Confusion matrices on the test set (threshold {threshold})")
@@ -240,8 +259,7 @@ def plot_metric_comparison(comparison_table):
     for index, row in comparison_table.reset_index(drop=True).iterrows():
         positions = [metric_index + index * bar_width for metric_index in range(len(metric_names))]
         values = [row[metric] for metric in metric_names]
-        axis.bar(positions, values, width=bar_width, label=row["Model"],
-                 color=MODEL_COLORS[row["Model"]])
+        axis.bar(positions, values, width=bar_width, label=row["Model"], color=MODEL_COLORS[row["Model"]])
 
     axis.set_xticks([metric_index + 0.4 - bar_width / 2 for metric_index in range(len(metric_names))])
     axis.set_xticklabels(metric_names)

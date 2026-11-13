@@ -96,7 +96,10 @@ def plot_top_of_tree(tree_pipeline, max_depth=3):
         fontsize=10,
         ax=axis,
     )
-    axis.set_title(f"Top {max_depth} levels of the trained Decision Tree (full depth: {tree_model.get_depth()}, leaves: {tree_model.get_n_leaves()})", fontsize=14)
+    axis.set_title(
+        f"Top {max_depth} levels of the trained Decision Tree (full depth: {tree_model.get_depth()}, leaves: {tree_model.get_n_leaves()})",
+        fontsize=14,
+    )
     return save_figure(figure, "decision_tree_top_levels.png")
 
 
@@ -121,8 +124,13 @@ def compute_permutation_importance(pipeline, test_features, test_target, repeats
         A pandas Series: feature name -> mean drop in ROC-AUC.
     """
     result = permutation_importance(
-        pipeline, test_features, test_target,
-        scoring="roc_auc", n_repeats=repeats, random_state=RANDOM_STATE, n_jobs=-1,
+        pipeline,
+        test_features,
+        test_target,
+        scoring="roc_auc",
+        n_repeats=repeats,
+        random_state=RANDOM_STATE,
+        n_jobs=-1,
     )
     return pd.Series(result.importances_mean, index=test_features.columns)
 
@@ -156,7 +164,9 @@ def permutation_importance_all_models(models, test_features, test_target, filena
     )
 
     figure, axis = plt.subplots(figsize=(10, 8))
-    sns.heatmap(importance_table, annot=True, fmt=".3f", cmap="Greens", cbar_kws={"label": "Drop in ROC-AUC"}, ax=axis)
+    sns.heatmap(
+        importance_table, annot=True, fmt=".3f", cmap="Greens", cbar_kws={"label": "Drop in ROC-AUC"}, ax=axis
+    )
     title = "Permutation importance: drop in test ROC-AUC when a feature is shuffled"
     if filename_prefix != "":
         title = title + "\n(models retrained without " + ABLATION_FEATURE + ")"
@@ -179,8 +189,9 @@ def rank_features(importance_table):
     return importance_table.rank(ascending=False, method="min").astype(int)
 
 
-def run_ablation(train_features, train_target, test_features, test_target,
-                 full_comparison_table, full_importance_table):
+def run_ablation(
+    train_features, train_target, test_features, test_target, full_comparison_table, full_importance_table
+):
     """
     Ablation experiment: retrain every model WITHOUT PageValues.
 
@@ -210,37 +221,46 @@ def run_ablation(train_features, train_target, test_features, test_target,
     reduced_train_features = train_features.drop(columns=ABLATION_FEATURE)
     reduced_test_features = test_features.drop(columns=ABLATION_FEATURE)
 
-    reduced_results = train_all_models(reduced_train_features, train_target,
-                                       reduced_numerical, CATEGORICAL_FEATURES)
+    reduced_results = train_all_models(
+        reduced_train_features, train_target, reduced_numerical, CATEGORICAL_FEATURES
+    )
     reduced_models = {name: result["pipeline"] for name, result in reduced_results.items()}
 
-    reduced_table = build_comparison_table(reduced_models, reduced_results,
-                                           reduced_test_features, test_target,
-                                           file_prefix="ablation_")
+    reduced_table = build_comparison_table(
+        reduced_models, reduced_results, reduced_test_features, test_target, file_prefix="ablation_"
+    )
 
-    plot_roc_curves(reduced_models, reduced_test_features, test_target,
-                    filename="ablation_roc_curves.png",
-                    title="ROC curves without " + ABLATION_FEATURE)
+    plot_roc_curves(
+        reduced_models,
+        reduced_test_features,
+        test_target,
+        filename="ablation_roc_curves.png",
+        title="ROC curves without " + ABLATION_FEATURE,
+    )
 
     # Side-by-side score comparison.
-    metrics_table = pd.DataFrame({
-        "Model": full_comparison_table["Model"],
-        "F1 (all features)": full_comparison_table["F1"].values,
-        "F1 (no PageValues)": reduced_table["F1"].values,
-        "ROC-AUC (all features)": full_comparison_table["ROC-AUC"].values,
-        "ROC-AUC (no PageValues)": reduced_table["ROC-AUC"].values,
-    })
+    metrics_table = pd.DataFrame(
+        {
+            "Model": full_comparison_table["Model"],
+            "F1 (all features)": full_comparison_table["F1"].values,
+            "F1 (no PageValues)": reduced_table["F1"].values,
+            "ROC-AUC (all features)": full_comparison_table["ROC-AUC"].values,
+            "ROC-AUC (no PageValues)": reduced_table["ROC-AUC"].values,
+        }
+    )
     metrics_table["F1 change"] = metrics_table["F1 (no PageValues)"] - metrics_table["F1 (all features)"]
-    metrics_table["ROC-AUC change"] = (metrics_table["ROC-AUC (no PageValues)"]
-                                       - metrics_table["ROC-AUC (all features)"])
+    metrics_table["ROC-AUC change"] = (
+        metrics_table["ROC-AUC (no PageValues)"] - metrics_table["ROC-AUC (all features)"]
+    )
     metrics_table = metrics_table.round(3)
     metrics_table.to_csv(os.path.join(OUTPUTS_FOLDER, "ablation_metrics.csv"), index=False)
     print("\nAblation results (test set):")
     print(metrics_table.to_string(index=False))
     plot_ablation_scores(metrics_table)
 
-    reduced_importance = permutation_importance_all_models(reduced_models, reduced_test_features,
-                                                           test_target, filename_prefix="ablation_")
+    reduced_importance = permutation_importance_all_models(
+        reduced_models, reduced_test_features, test_target, filename_prefix="ablation_"
+    )
 
     # Top 5 features of each model, with and without PageValues.
     full_ranks = rank_features(full_importance_table)
@@ -248,11 +268,13 @@ def run_ablation(train_features, train_target, test_features, test_target,
     for model_name in full_importance_table.columns:
         top_full = list(full_ranks[model_name].sort_values().index[:5])
         top_reduced = list(reduced_importance[model_name].sort_values(ascending=False).index[:5])
-        rows.append({
-            "Model": model_name,
-            "Top 5 with all features": ", ".join(top_full),
-            "Top 5 without PageValues": ", ".join(top_reduced),
-        })
+        rows.append(
+            {
+                "Model": model_name,
+                "Top 5 with all features": ", ".join(top_full),
+                "Top 5 without PageValues": ", ".join(top_reduced),
+            }
+        )
     top_features_table = pd.DataFrame(rows)
     top_features_table.to_csv(os.path.join(OUTPUTS_FOLDER, "ablation_top_features.csv"), index=False)
     print("\nFeature rankings with and without PageValues:")
@@ -277,10 +299,20 @@ def plot_ablation_scores(metrics_table):
     for axis, metric in zip(axes, ["F1", "ROC-AUC"], strict=True):
         with_values = metrics_table[metric + " (all features)"]
         without_values = metrics_table[metric + " (no PageValues)"]
-        axis.bar([p - bar_width / 2 for p in positions], with_values, width=bar_width,
-                 label="All features", color="#264653")
-        axis.bar([p + bar_width / 2 for p in positions], without_values, width=bar_width,
-                 label="Without PageValues", color="#E9C46A")
+        axis.bar(
+            [p - bar_width / 2 for p in positions],
+            with_values,
+            width=bar_width,
+            label="All features",
+            color="#264653",
+        )
+        axis.bar(
+            [p + bar_width / 2 for p in positions],
+            without_values,
+            width=bar_width,
+            label="Without PageValues",
+            color="#E9C46A",
+        )
         axis.set_xticks(positions)
         axis.set_xticklabels(metrics_table["Model"], rotation=20, ha="right")
         axis.set_ylim(0, 1)
@@ -336,14 +368,22 @@ def write_tree_vs_xgboost_comparison(comparison_table, models, importance_table)
         "decision, XGBoost is the stronger benchmark. For a shop team that needs to understand and "
         "trust the rules, the Decision Tree gives most of the performance with full transparency.\n"
     ).format(
-        tree_f1=tree_row["F1"], boost_f1=boost_row["F1"],
-        tree_auc=tree_row["ROC-AUC"], boost_auc=boost_row["ROC-AUC"],
-        tree_p=tree_row["Precision"], tree_r=tree_row["Recall"],
-        boost_p=boost_row["Precision"], boost_r=boost_row["Recall"],
-        depth=tree_model.get_depth(), leaves=tree_model.get_n_leaves(),
-        trees=boost_model.n_estimators, boost_depth=boost_model.max_depth,
-        tree_top=", ".join(tree_top), boost_top=", ".join(boost_top),
-        auc_gap=boost_row["ROC-AUC"] - tree_row["ROC-AUC"], f1_gap=boost_row["F1"] - tree_row["F1"],
+        tree_f1=tree_row["F1"],
+        boost_f1=boost_row["F1"],
+        tree_auc=tree_row["ROC-AUC"],
+        boost_auc=boost_row["ROC-AUC"],
+        tree_p=tree_row["Precision"],
+        tree_r=tree_row["Recall"],
+        boost_p=boost_row["Precision"],
+        boost_r=boost_row["Recall"],
+        depth=tree_model.get_depth(),
+        leaves=tree_model.get_n_leaves(),
+        trees=boost_model.n_estimators,
+        boost_depth=boost_model.max_depth,
+        tree_top=", ".join(tree_top),
+        boost_top=", ".join(boost_top),
+        auc_gap=boost_row["ROC-AUC"] - tree_row["ROC-AUC"],
+        f1_gap=boost_row["F1"] - tree_row["F1"],
     )
 
     with open(os.path.join(OUTPUTS_FOLDER, "tree_vs_xgboost.md"), "w") as file:
@@ -374,7 +414,7 @@ def describe_decision_path(tree_pipeline, session):
     # decision_path() marks every node the session visits; indices[...]
     # gives those node numbers in order from the root.
     node_indicator = tree_model.decision_path(transformed_session)
-    visited_nodes = node_indicator.indices[node_indicator.indptr[0]:node_indicator.indptr[1]]
+    visited_nodes = node_indicator.indices[node_indicator.indptr[0] : node_indicator.indptr[1]]
 
     rules = []
     for node in visited_nodes:
@@ -392,7 +432,7 @@ def describe_decision_path(tree_pipeline, session):
             if feature_name.startswith(categorical_feature + "_"):
                 original_feature = categorical_feature
         if original_feature is not None:
-            category = feature_name[len(original_feature) + 1:]
+            category = feature_name[len(original_feature) + 1 :]
             if goes_left:
                 rules.append(f"{original_feature} is not {category}")
             else:

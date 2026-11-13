@@ -130,9 +130,7 @@ def undersample_training_data(train_features, train_target):
     buyer_rows = train_target[train_target == 1].index
     non_buyer_rows = train_target[train_target == 0].index
 
-    sampled_non_buyer_rows = pd.Series(non_buyer_rows).sample(
-        n=len(buyer_rows), random_state=RANDOM_STATE
-    )
+    sampled_non_buyer_rows = pd.Series(non_buyer_rows).sample(n=len(buyer_rows), random_state=RANDOM_STATE)
 
     kept_rows = list(buyer_rows) + list(sampled_non_buyer_rows)
     undersampled_features = train_features.loc[kept_rows]

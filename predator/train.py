@@ -86,8 +86,9 @@ def tune_model(model_name, train_features, train_target, numerical_features, cat
     """
     scale_pos_weight = calculate_scale_pos_weight(train_target)
     model = make_model(model_name, scale_pos_weight)
-    pipeline = build_pipeline(model, numerical_features, categorical_features,
-                              scale_numbers=uses_scaling(model_name))
+    pipeline = build_pipeline(
+        model, numerical_features, categorical_features, scale_numbers=uses_scaling(model_name)
+    )
     parameter_grid = get_parameter_grids()[model_name]
 
     fit_features = train_features
@@ -193,12 +194,14 @@ def train_all_models(train_features, train_target, numerical_features=None, cate
         print("\nTraining " + model_name + "...")
         start_time = time.time()
 
-        result = tune_model(model_name, train_features, train_target,
-                            numerical_features, categorical_features)
+        result = tune_model(
+            model_name, train_features, train_target, numerical_features, categorical_features
+        )
 
         undersample = model_name == KNN_UNDERSAMPLED
-        oof_probabilities = out_of_fold_probabilities(result["pipeline"], train_features,
-                                                      train_target, undersample)
+        oof_probabilities = out_of_fold_probabilities(
+            result["pipeline"], train_features, train_target, undersample
+        )
         oof_predictions = (oof_probabilities >= 0.5).astype(int)
         result["oof_probabilities"] = oof_probabilities
         result["cv_f1"] = float(f1_score(train_target, oof_predictions))

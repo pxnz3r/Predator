@@ -35,6 +35,8 @@ def get_small_sample():
     """
     if "sample" not in loaded_data:
         dataset = get_dataset()
-        sample, rest = train_test_split(dataset, train_size=1000, stratify=dataset["Revenue"], random_state=42)
+        sample, rest = train_test_split(
+            dataset, train_size=1000, stratify=dataset["Revenue"], random_state=42
+        )
         loaded_data["sample"] = sample
     return loaded_data["sample"]
