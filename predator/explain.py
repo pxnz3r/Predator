@@ -21,7 +21,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
-from sklearn.inspection import permutation_importance
+from sklearn.inspection import PartialDependenceDisplay, permutation_importance
 from sklearn.tree import plot_tree
 
 from predator.data import CATEGORICAL_FEATURES, NUMERICAL_FEATURES, RANDOM_STATE, save_figure
@@ -31,6 +31,8 @@ from predator.preprocess import get_feature_names
 from predator.train import train_all_models
 
 ABLATION_FEATURE = "PageValues"
+PARTIAL_DEPENDENCE_FEATURES = ["PageValues", "Month", "ExitRates"]
+PARTIAL_DEPENDENCE_SAMPLE_SIZE = 2000
 
 
 def plot_tree_feature_importance(tree_pipeline, top_n=15):
@@ -443,3 +445,55 @@ def describe_decision_path(tree_pipeline, session):
             else:
                 rules.append(f"{feature_name} is {session_value:.2f}, which is > {split_value:.2f}")
     return rules
+
+
+def plot_partial_dependence(models, model_names, train_features):
+    """
+    Partial dependence: how the predicted purchase probability changes
+    when ONE feature changes and everything else stays as it was.
+
+    For every value on the x axis (e.g. PageValues = 20), the feature is
+    set to that value for all sessions in a sample, the model predicts,
+    and the predictions are averaged. Permutation importance says HOW MUCH
+    a feature matters; partial dependence shows in WHICH DIRECTION and
+    with what shape (a jump, a steady rise, a plateau).
+
+    Inputs:
+        models: dictionary model name -> fitted pipeline.
+        model_names: the models to plot (one row each).
+        train_features: the training data (a random sample is used).
+    Returns:
+        The path of the saved plot.
+    """
+    print("\nPartial dependence plots for " + ", ".join(PARTIAL_DEPENDENCE_FEATURES) + "...")
+    sample = train_features.sample(
+        n=min(PARTIAL_DEPENDENCE_SAMPLE_SIZE, len(train_features)), random_state=RANDOM_STATE
+    )
+    categorical = [feature for feature in PARTIAL_DEPENDENCE_FEATURES if feature in CATEGORICAL_FEATURES]
+
+    figure, axes = plt.subplots(
+        len(model_names),
+        len(PARTIAL_DEPENDENCE_FEATURES),
+        figsize=(5 * len(PARTIAL_DEPENDENCE_FEATURES), 4 * len(model_names)),
+    )
+    for row, model_name in enumerate(model_names):
+        PartialDependenceDisplay.from_estimator(
+            models[model_name],
+            sample,
+            features=PARTIAL_DEPENDENCE_FEATURES,
+            categorical_features=categorical,
+            response_method="predict_proba",
+            ax=axes[row],
+            line_kw={"color": MODEL_COLORS[model_name]},
+        )
+        # Categorical features are drawn as bars; give them the model's colour too.
+        for axis in axes[row]:
+            for bar in axis.patches:
+                bar.set_color(MODEL_COLORS[model_name])
+        axes[row][0].set_ylabel(model_name + "\npredicted probability")
+        for column in range(1, len(PARTIAL_DEPENDENCE_FEATURES)):
+            axes[row][column].set_ylabel("")
+
+    figure.suptitle("Partial dependence: average predicted purchase probability", fontsize=13)
+    figure.tight_layout()
+    return save_figure(figure, "partial_dependence.png")
