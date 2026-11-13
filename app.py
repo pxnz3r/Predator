@@ -49,20 +49,25 @@ FEATURE_HELP = {
 COUNT_FEATURES = ["Administrative", "Informational", "ProductRelated"]
 
 
-@st.cache_resource
 def load_everything():
     """
-    Load model_info.json and every saved model once (Streamlit caches it).
+    Load model_info.json and every saved model.
+
+    Streamlit re-runs this whole script after every click, so we keep the
+    loaded models in st.session_state and only read the files the first time.
 
     Returns:
         (model_info, models) where models is a dictionary name -> pipeline.
     """
-    with open(os.path.join(MODELS_FOLDER, "model_info.json")) as file:
-        model_info = json.load(file)
-    models = {}
-    for model_name in MODEL_NAMES:
-        models[model_name] = load_model_by_name(model_name, model_info)
-    return model_info, models
+    if "models" not in st.session_state:
+        with open(os.path.join(MODELS_FOLDER, "model_info.json")) as file:
+            model_info = json.load(file)
+        models = {}
+        for model_name in MODEL_NAMES:
+            models[model_name] = load_model_by_name(model_name, model_info)
+        st.session_state["model_info"] = model_info
+        st.session_state["models"] = models
+    return st.session_state["model_info"], st.session_state["models"]
 
 
 def models_are_available():

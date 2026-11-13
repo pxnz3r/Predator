@@ -1,6 +1,7 @@
 """Tests for predator/predict.py: a session file gives a valid prediction."""
 
 import pytest
+from helpers import get_small_sample
 
 from predator.data import ALL_FEATURES, TARGET_COLUMN
 from predator.models import make_model
@@ -8,9 +9,14 @@ from predator.predict import load_session_from_json, predict_session, prepare_se
 from predator.preprocess import build_pipeline
 
 
-@pytest.fixture(scope="module")
-def small_tree(small_sample):
-    """A Decision Tree pipeline trained on the small sample."""
+def train_small_tree():
+    """
+    Train a Decision Tree pipeline on the small sample.
+
+    Returns:
+        The fitted pipeline.
+    """
+    small_sample = get_small_sample()
     pipeline = build_pipeline(make_model("Decision Tree", 5.0), scale_numbers=False)
     pipeline.fit(small_sample[ALL_FEATURES], small_sample[TARGET_COLUMN])
     return pipeline
@@ -23,8 +29,9 @@ def test_example_file_loads_as_one_row():
     assert list(session.columns) == ALL_FEATURES
 
 
-def test_prediction_output_is_valid(small_tree):
+def test_prediction_output_is_valid():
     """predict_session returns a label, a probability in [0, 1] and a threshold decision."""
+    small_tree = train_small_tree()
     session = load_session_from_json("examples/session_buyer.json")
     result = predict_session(small_tree, session, threshold=0.4)
     assert result["label"] in ["purchase", "no purchase"]
