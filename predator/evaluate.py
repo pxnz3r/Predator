@@ -268,3 +268,92 @@ def plot_metric_comparison(comparison_table):
     axis.set_title("Model comparison (threshold 0.5)")
     axis.legend(loc="upper left", fontsize=9)
     return save_figure(figure, "metric_comparison.png")
+
+
+SLICE_COLUMNS = ["VisitorType", "Month", "Region"]
+
+
+def evaluate_slices(models, model_names, test_features, test_target, threshold=0.5):
+    """
+    Score the models separately on groups of sessions ("slices"), e.g.
+    only new visitors, or only November.
+
+    One overall F1 can hide a group the model serves badly. Slices with
+    few buyers give noisy scores, so the buyer count is kept next to
+    every score.
+
+    Inputs:
+        models: dictionary model name -> fitted pipeline.
+        model_names: the models to analyse.
+        test_features, test_target: the test data.
+        threshold: the probability cutoff.
+    Returns:
+        A DataFrame with one row per model, slice column and value, also
+        saved to outputs/slice_analysis.csv.
+    """
+    print("\nScoring the models on slices of the test set...")
+    true_target = test_target.to_numpy()
+    rows = []
+    for model_name in model_names:
+        predictions = (get_purchase_probabilities(models[model_name], test_features) >= threshold).astype(int)
+        for column in SLICE_COLUMNS:
+            for value in sorted(test_features[column].unique()):
+                in_slice = (test_features[column] == value).to_numpy()
+                slice_target = true_target[in_slice]
+                slice_predictions = predictions[in_slice]
+                rows.append(
+                    {
+                        "Model": model_name,
+                        "Slice": column,
+                        "Value": str(value),
+                        "Sessions": int(in_slice.sum()),
+                        "Buyers": int(slice_target.sum()),
+                        "Purchase rate": slice_target.mean(),
+                        "Precision": precision_score(slice_target, slice_predictions, zero_division=0),
+                        "Recall": recall_score(slice_target, slice_predictions, zero_division=0),
+                        "F1": f1_score(slice_target, slice_predictions, zero_division=0),
+                    }
+                )
+
+    table = pd.DataFrame(rows).round(3)
+    table.to_csv(os.path.join(OUTPUTS_FOLDER, "slice_analysis.csv"), index=False)
+    plot_slice_scores(table, model_names)
+    return table
+
+
+def plot_slice_scores(slice_table, model_names):
+    """
+    Bar charts of F1 per visitor type and per month, one bar per model.
+
+    Inputs:
+        slice_table: the DataFrame from evaluate_slices().
+        model_names: the models in the table.
+    Returns:
+        The path of the saved plot.
+    """
+    month_order = ["Feb", "Mar", "May", "June", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+    figure, axes = plt.subplots(1, 2, figsize=(15, 4.8), gridspec_kw={"width_ratios": [1, 3]})
+    for axis, column in zip(axes, ["VisitorType", "Month"], strict=True):
+        rows = slice_table[slice_table["Slice"] == column]
+        values = list(rows["Value"].unique())
+        if column == "Month":
+            values = [month for month in month_order if month in values]
+        bar_width = 0.8 / len(model_names)
+        for index, model_name in enumerate(model_names):
+            model_rows = rows[rows["Model"] == model_name].set_index("Value").loc[values]
+            positions = [position + index * bar_width for position in range(len(values))]
+            axis.bar(
+                positions, model_rows["F1"], width=bar_width, color=MODEL_COLORS[model_name], label=model_name
+            )
+        buyer_counts = rows[rows["Model"] == model_names[0]].set_index("Value").loc[values, "Buyers"]
+        labels = [f"{value}\n({count} buyers)" for value, count in zip(values, buyer_counts, strict=True)]
+        axis.set_xticks(
+            [position + bar_width * (len(model_names) - 1) / 2 for position in range(len(values))]
+        )
+        axis.set_xticklabels(labels, fontsize=8)
+        axis.set_ylim(0, 1)
+        axis.set_title("F1 by " + column, fontsize=11)
+    axes[0].set_ylabel("F1 (test set, threshold 0.5)")
+    axes[1].legend(fontsize=9)
+    figure.tight_layout()
+    return save_figure(figure, "slice_scores.png")
