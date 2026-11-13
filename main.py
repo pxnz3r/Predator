@@ -24,6 +24,7 @@ import time
 import warnings
 
 from predator import calibration, curves, data, errors, evaluate, explain, significance, threshold, train
+from predator.predict import prepare_session
 from predator.models import DECISION_TREE, KNN_UNDERSAMPLED, MODEL_FILE_NAMES, XGBOOST
 
 # Some libraries print warnings that are not useful for a student run.
@@ -206,6 +207,19 @@ def main():
         training_results,
     )
     print("  Saved", train.save_model_info(model_info))
+
+    print_step(12, "Test the Decision Tree with a new custom input")
+    # A new session typed in by hand, as in the lab lecture: a returning
+    # visitor in November who viewed 15 product pages with a high PageValue.
+    new_data = {
+        "Administrative": 1, "Administrative_Duration": 81.0, "Informational": 0,
+        "Informational_Duration": 0.0, "ProductRelated": 15, "ProductRelated_Duration": 914.5,
+        "BounceRates": 0.0, "ExitRates": 0.014, "PageValues": 56.58, "SpecialDay": 0.0,
+        "Month": "Nov", "OperatingSystems": 2, "Browser": 2, "Region": 2, "TrafficType": 11,
+        "VisitorType": "Returning_Visitor", "Weekend": True,
+    }  # fmt: skip
+    new_df = prepare_session(new_data)
+    print("  Predicted class (1 = purchase):", models[DECISION_TREE].predict(new_df))
 
     minutes = (time.time() - start_time) / 60
     print(f"\nDone in {minutes:.1f} minutes. Figures are in outputs/figures/, tables in outputs/.")

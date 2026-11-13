@@ -55,7 +55,7 @@ Undersampling is done with plain pandas on training data only, never on the test
 
 | Model | Grid | Combinations | Best |
 |---|---|---|---|
-| Decision Tree | max_depth {3, 5, 7, 10, 15, None}, min_samples_split {2, 10, 20, 50}, min_samples_leaf {1, 5, 10, 20}, criterion {gini, entropy} | 192 | entropy, depth 7, split 50, leaf 20 |
+| Decision Tree (criterion = entropy, as in the lab lecture) | max_depth {3, 5, 7, 10, 15}, min_samples_split {2, 10, 20, 50}, min_samples_leaf {1, 5, 10, 20} | 80 | depth 7, split 50, leaf 20 |
 | KNN | n_neighbors {1, 3, ..., 31}, weights {uniform, distance}, metric {euclidean, manhattan} | 64 | k = 3, distance, euclidean |
 | KNN (undersampled) | same | 64 | k = 27, distance, manhattan |
 | XGBoost | n_estimators {100, 200, 300}, max_depth {3, 4, 5, 6}, learning_rate {0.03, 0.1, 0.3} | 36 | 100 trees, depth 6, rate 0.1 |

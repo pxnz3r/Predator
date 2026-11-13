@@ -154,6 +154,13 @@ def validate_dataset(data):
     """
     print("\nChecking data quality...")
 
+    # Basic inspection, as in the lab lecture
+    print("Shape:", data.shape)
+    data.info()
+    print(data.describe())
+    print(data.isnull().sum())
+    print(data[TARGET_COLUMN].value_counts())
+
     expected_columns = ALL_FEATURES + [TARGET_COLUMN]
     missing_columns = [column for column in expected_columns if column not in data.columns]
     if len(missing_columns) > 0:
@@ -262,15 +269,20 @@ def plot_class_balance(data):
         The path of the saved plot.
     """
     counts = data[TARGET_COLUMN].value_counts().sort_index()
-    labels = ["No purchase", "Purchase"]
 
     figure, axis = plt.subplots(figsize=(6, 4))
-    bars = axis.bar(labels, counts.values, color=[NO_PURCHASE_COLOR, PURCHASE_COLOR])
-    for bar, count in zip(bars, counts.values, strict=True):
+    sns.countplot(
+        x=data[TARGET_COLUMN].astype(int),
+        hue=data[TARGET_COLUMN].astype(int),
+        palette=[NO_PURCHASE_COLOR, PURCHASE_COLOR],
+        legend=False,
+        ax=axis,
+    )
+    axis.set_xticks([0, 1], ["No purchase", "Purchase"])
+    axis.set_xlabel("")
+    for position, count in enumerate(counts.values):
         share = count / counts.sum()
-        axis.text(
-            bar.get_x() + bar.get_width() / 2, count, f"{count:,}\n({share:.1%})", ha="center", va="bottom"
-        )
+        axis.text(position, count, f"{count:,}\n({share:.1%})", ha="center", va="bottom")
     axis.set_title("Class balance: most sessions do not buy")
     axis.set_ylabel("Number of sessions")
     axis.set_ylim(0, counts.max() * 1.2)

@@ -20,8 +20,8 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import pandas as pd
+import seaborn as sns
 from sklearn.metrics import (
-    ConfusionMatrixDisplay,
     accuracy_score,
     classification_report,
     confusion_matrix,
@@ -228,14 +228,19 @@ def plot_confusion_matrices(models, test_features, test_target, threshold=0.5):
     for axis, (model_name, pipeline) in zip(axes, models.items(), strict=True):
         probabilities = get_purchase_probabilities(pipeline, test_features)
         predictions = (probabilities >= threshold).astype(int)
-        ConfusionMatrixDisplay.from_predictions(
-            test_target,
-            predictions,
-            display_labels=["No buy", "Buy"],
+        matrix = confusion_matrix(test_target, predictions)
+        sns.heatmap(
+            matrix,
+            annot=True,
+            fmt="d",
             cmap="Blues",
-            colorbar=False,
+            cbar=False,
+            xticklabels=["No buy", "Buy"],
+            yticklabels=["No buy", "Buy"],
             ax=axis,
         )
+        axis.set_xlabel("Predicted label")
+        axis.set_ylabel("True label")
         axis.set_title(model_name)
     figure.suptitle(f"Confusion matrices on the test set (threshold {threshold})")
     figure.tight_layout()

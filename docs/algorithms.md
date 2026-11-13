@@ -6,10 +6,10 @@ A beginner-friendly look at the four models, and how each one did on this proble
 
 **Idea:** a flowchart of yes/no questions. "Is PageValues above 0.05? If yes, is BounceRates 0? ..." Each leaf at the bottom gives a prediction.
 
-**How it learns:** starting with all training sessions, it tries every feature and every cut point and picks the question that separates buyers from non-buyers best. "Best" means the biggest drop in impurity:
+**How it learns:** starting with all training sessions, it tries every feature and every cut point and picks the question that separates buyers from non-buyers best. "Best" means the highest **information gain**, the biggest drop in entropy (criterion = "entropy", as in the lab lecture):
 
-- **Gini impurity** = 1 - (share of buyers)^2 - (share of non-buyers)^2. A node with only one class has Gini 0; a 50/50 node has Gini 0.5.
 - **Entropy** = -sum(p * log2(p)) over both classes. 0 for a pure node, 1 for 50/50. It measures how uncertain we are about a label in the node.
+- **Information gain** = entropy of the parent node minus the weighted entropy of the two child nodes.
 
 It repeats this on each side until a stopping rule (max_depth, min_samples_split, min_samples_leaf) says stop. Those rules prevent **overfitting**: a tree that is allowed to grow until every leaf is pure memorises the training data and does worse on new sessions.
 

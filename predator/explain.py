@@ -3,7 +3,7 @@ explain.py - Which features drive the predictions?
 
 Three ways of answering that question:
 1. Decision Tree feature importance: how much each feature reduced the
-   impurity (Gini/entropy) across all the splits that used it.
+   entropy (information gain) across all the splits that used it.
    Only works for tree models.
 2. Permutation importance: shuffle one column of the test set and measure
    how much the model's score drops. If the score drops a lot, the model

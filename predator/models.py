@@ -67,13 +67,13 @@ def make_decision_tree():
 
     How it works: the tree asks yes/no questions about the features
     ("Is PageValues <= 0.94?"). At every step it picks the question that
-    best separates buyers from non-buyers. "Best" is measured with an
-    impurity score:
-        - Gini impurity: the chance that two sessions picked at random from
-          the node have different labels. 0 means the node is pure.
-        - Entropy: how "surprised" we are on average by a label in the
-          node, from information theory. Also 0 when the node is pure.
-    The split that lowers the impurity the most wins.
+    best separates buyers from non-buyers. "Best" is measured with
+    entropy, as in the lab lecture (criterion="entropy"):
+        - Entropy: how uncertain we are about a label in the node, from
+          information theory. 0 when the node is pure, 1 for a 50/50 node.
+        - Information gain: how much a split lowers the entropy.
+    The split with the highest information gain wins. max_depth (tuned in
+    get_parameter_grids, never unlimited) stops the tree overfitting.
 
     class_weight="balanced" makes mistakes on the rare buyer class count
     more (about 5.5 times more here), so the tree does not just learn to
@@ -82,7 +82,7 @@ def make_decision_tree():
     Returns:
         A DecisionTreeClassifier.
     """
-    return DecisionTreeClassifier(class_weight="balanced", random_state=RANDOM_STATE)
+    return DecisionTreeClassifier(criterion="entropy", class_weight="balanced", random_state=RANDOM_STATE)
 
 
 def make_knn():
@@ -165,10 +165,9 @@ def get_parameter_grids():
         Naive Bayes has an empty grid because it is an untuned baseline.
     """
     decision_tree_grid = {
-        "model__max_depth": [3, 5, 7, 10, 15, None],
+        "model__max_depth": [3, 5, 7, 10, 15],
         "model__min_samples_split": [2, 10, 20, 50],
         "model__min_samples_leaf": [1, 5, 10, 20],
-        "model__criterion": ["gini", "entropy"],
     }
 
     # Odd values of k (1, 3, 5, ..., 31) avoid ties in a two-class vote.

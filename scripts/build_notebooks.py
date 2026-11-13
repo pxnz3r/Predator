@@ -135,7 +135,7 @@ Because the scaler and encoder are fitted inside the pipeline, they only ever se
     {
         "markdown": """## 4. The models and their hyperparameter grids
 
-- **Decision Tree**: asks yes/no questions, choosing at each step the split that lowers Gini impurity or entropy the most. `class_weight="balanced"` makes errors on the rare buyer class count more.
+- **Decision Tree**: asks yes/no questions, choosing at each step the split with the highest information gain (criterion = "entropy", as in the lab lecture). `class_weight="balanced"` makes errors on the rare buyer class count more.
 - **KNN**: classifies a session by a vote of its k most similar training sessions (Euclidean or Manhattan distance). It has no class weights, so we also train a version on **randomly undersampled** training data (all buyers plus an equal number of non-buyers).
 - **Gaussian Naive Bayes**: applies Bayes' theorem assuming features are independent and bell-shaped within each class. Neither assumption holds here, which makes it a useful untuned baseline.
 - **XGBoost (benchmark)**: gradient boosting; each new small tree is trained to fix the errors of the trees before it. `scale_pos_weight` (non-buyers / buyers) handles the imbalance.""",

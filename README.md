@@ -38,7 +38,7 @@
 
 **Limits stated up front.** A [model card](docs/model_card.md) covers intended use, per-group performance and risks, including whether `PageValues` leaks the answer.
 
-**Readable code.** Plain functions with docstrings and comments that explain the AI concepts as they come up: Gini and entropy, distances and scaling, the Naive Bayes assumption, boosting, cross-validation, data leakage and thresholds.
+**Readable code.** Plain functions with docstrings and comments that explain the AI concepts as they come up: entropy and information gain, distances and scaling, the Naive Bayes assumption, boosting, cross-validation, data leakage and thresholds.
 
 ## Results
 
