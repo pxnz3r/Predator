@@ -25,6 +25,7 @@ Python 3.15+ (deps in `pyproject.toml`, locked in `uv.lock`; `uv sync`), pandas,
 
 ## Conventions
 
+- Match the instructor's lab sample code and patterns (lecture PDFs listed in CONTINUITY.md open problems). The user asked for this over custom or more complex approaches.
 - Code is written in a beginner-student style on purpose: plain functions, descriptive names, docstrings on every function, comments explaining the AI concepts. Keep it that way.
 - `random_state=42` everywhere. Preprocessing is fitted inside the Pipeline on training data only.
 - XGBoost is always labelled as a benchmark beyond the course.

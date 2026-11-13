@@ -33,5 +33,7 @@ GitHub repo deleted and recreated on 2026-11-13 so the old leaked SHAs are gone;
 
 ## Open problems
 
+- TODO (user, 2026-11-13): rewrite the code to follow the instructor's lab guidance and sample code, as done for AI Lab 8 and 9. Reference PDFs in C:/Users/MHA/Downloads: AI--Lab8-Lectures-05112026-124436am.pdf (decision tree: info/describe/isnull, get_dummies, countplot, corr heatmap, stratify=y, DecisionTreeClassifier(criterion="entropy", max_depth=5), accuracy/classification_report/confusion-matrix heatmap, plot_tree, predict on a new_data dict; linear regression: hist/scatter/heatmap, coef_/intercept_, MSE/RMSE/R2, red predicted line) and Code_Example_ANN.pdf (Keras Sequential Dense relu + sigmoid, adam, binary_crossentropy, StandardScaler, threshold 0.5). Simple top-to-bottom lecture style beats extra machinery.
+
 - The Decision Tree's validation curve peaks at depth 1 to 2 (CV F1 0.667), outside the tuning grid [3, 5, 7, 10, 15, None]. Documented in results.md; the grid was left as is to keep the reported numbers stable.
 - Kaggle links use the YOUR_KAGGLE_USERNAME placeholder until the user publishes the notebook (docs/kaggle_publishing.md).
