@@ -13,6 +13,7 @@ Page 2 (Model comparison): the comparison tables and key figures.
 import json
 import os
 
+import altair as alt
 import pandas as pd
 import streamlit as st
 
@@ -26,28 +27,80 @@ OUTPUTS_FOLDER = "outputs"
 FIGURES_FOLDER = os.path.join(OUTPUTS_FOLDER, "figures")
 EXAMPLES_FOLDER = "examples"
 
-# Short help text shown next to every input.
+# Readable label for every dataset column.
+FEATURE_LABELS = {
+    "Administrative": "Account pages",
+    "Administrative_Duration": "Time on account pages (s)",
+    "Informational": "Info pages",
+    "Informational_Duration": "Time on info pages (s)",
+    "ProductRelated": "Product pages",
+    "ProductRelated_Duration": "Time on product pages (s)",
+    "BounceRates": "Bounce rate",
+    "ExitRates": "Exit rate",
+    "PageValues": "Page value",
+    "SpecialDay": "Closeness to a holiday",
+    "Month": "Month",
+    "OperatingSystems": "Operating system",
+    "Browser": "Browser",
+    "Region": "Region",
+    "TrafficType": "Traffic source",
+    "VisitorType": "Visitor type",
+    "Weekend": "Weekend visit",
+}
+
+# Help text: what the label can't say, plus the dataset column name.
 FEATURE_HELP = {
-    "Administrative": "Number of account/admin pages visited (login, profile...).",
-    "Administrative_Duration": "Seconds spent on admin pages.",
-    "Informational": "Number of information pages visited (shipping, contact...).",
-    "Informational_Duration": "Seconds spent on information pages.",
-    "ProductRelated": "Number of product pages visited.",
-    "ProductRelated_Duration": "Seconds spent on product pages.",
+    "Administrative": "Login, profile and other account pages.",
+    "Administrative_Duration": "",
+    "Informational": "Shipping, contact and other information pages.",
+    "Informational_Duration": "",
+    "ProductRelated": "",
+    "ProductRelated_Duration": "",
     "BounceRates": "Average share of visitors who left right after entering the pages seen (0 to 0.2).",
     "ExitRates": "Average share of page views that were the last of a session, for the pages seen (0 to 0.2).",
     "PageValues": "Average value of the pages seen, based on pages that led to purchases before. 0 = none.",
-    "SpecialDay": "Closeness to a holiday like Valentine's Day (0 = not close, 1 = the peak day).",
-    "Month": "Month of the visit (the dataset has no January or April).",
-    "OperatingSystems": "Operating system code.",
-    "Browser": "Browser code.",
-    "Region": "Region code of the visitor.",
+    "SpecialDay": "0 = not near a holiday like Valentine's Day, 1 = the peak day.",
+    "Month": "The dataset has no January or April.",
+    "OperatingSystems": "A code; the dataset doesn't say which system it is.",
+    "Browser": "A code; the dataset doesn't say which browser it is.",
+    "Region": "A code; the dataset doesn't name the regions.",
     "TrafficType": "How the visitor arrived (ad, search, direct...), as a code.",
-    "VisitorType": "New visitor, returning visitor, or other.",
-    "Weekend": "Was the visit on a weekend?",
+    "VisitorType": "",
+    "Weekend": "",
 }
 
 COUNT_FEATURES = ["Administrative", "Informational", "ProductRelated"]
+DURATION_FEATURES = ["Administrative_Duration", "Informational_Duration", "ProductRelated_Duration"]
+
+
+def feature_help(feature):
+    """
+    Help text for one input: the explanation and the dataset column name.
+
+    Input:
+        feature: the feature name.
+    Returns:
+        The help text (Markdown).
+    """
+    column = f"Column: `{feature}`"
+    if FEATURE_HELP[feature]:
+        return FEATURE_HELP[feature] + "  \n" + column
+    return column
+
+
+def readable_rule(rule):
+    """
+    Swap the column name at the start of a decision-path rule for its label.
+
+    Input:
+        rule: e.g. "PageValues is 0.00, which is <= 0.94".
+    Returns:
+        e.g. "Page value is 0.00, which is <= 0.94".
+    """
+    for feature, label in FEATURE_LABELS.items():
+        if rule.startswith(feature + " "):
+            return label + rule[len(feature) :]
+    return rule
 
 
 def load_everything():
@@ -129,31 +182,36 @@ def number_input(feature, start_values, model_info, key_prefix):
     lowest, highest = model_info["feature_ranges"][feature]
     if feature in COUNT_FEATURES:
         return st.number_input(
-            feature,
+            FEATURE_LABELS[feature],
             min_value=0,
             max_value=int(highest * 2),
             value=int(start_values[feature]),
             step=1,
-            help=FEATURE_HELP[feature],
+            help=feature_help(feature),
             key=key_prefix + feature,
         )
     if feature in ["BounceRates", "ExitRates", "SpecialDay"]:
         return st.number_input(
-            feature,
+            FEATURE_LABELS[feature],
             min_value=0.0,
             max_value=float(highest),
             value=float(start_values[feature]),
             step=0.01,
             format="%.3f",
-            help=FEATURE_HELP[feature],
+            help=feature_help(feature),
             key=key_prefix + feature,
         )
+    if feature in DURATION_FEATURES:
+        number_format = "%.0f"
+    else:
+        number_format = "%.2f"
     return st.number_input(
-        feature,
+        FEATURE_LABELS[feature],
         min_value=0.0,
         value=float(start_values[feature]),
         step=10.0,
-        help=FEATURE_HELP[feature],
+        format=number_format,
+        help=feature_help(feature),
         key=key_prefix + feature,
     )
 
@@ -177,8 +235,43 @@ def choice_input(feature, start_values, model_info, key_prefix):
     start_value = start_values[feature]
     start_index = options.index(start_value) if start_value in options else 0
     return st.selectbox(
-        feature, options, index=start_index, help=FEATURE_HELP[feature], key=key_prefix + feature
+        FEATURE_LABELS[feature],
+        options,
+        index=start_index,
+        help=feature_help(feature),
+        key=key_prefix + feature,
     )
+
+
+def probability_chart(probability, threshold):
+    """
+    One bar from 0 to 100%: the purchase probability, with the business
+    threshold drawn as a dashed line across it.
+
+    Inputs:
+        probability: the predicted purchase probability.
+        threshold: the business threshold.
+    Returns:
+        An Altair chart.
+    """
+    scale = alt.Scale(domain=[0, 1])
+    axis = alt.Axis(format="%", title=None, tickCount=5, grid=False)
+    track = (
+        alt.Chart(pd.DataFrame({"end": [1.0]}))
+        .mark_bar(opacity=0.15, cornerRadius=4)
+        .encode(x=alt.X("end:Q", scale=scale, axis=axis))
+    )
+    bar = (
+        alt.Chart(pd.DataFrame({"probability": [probability]}))
+        .mark_bar(cornerRadius=4)
+        .encode(x=alt.X("probability:Q", scale=scale, axis=axis))
+    )
+    line = (
+        alt.Chart(pd.DataFrame({"threshold": [threshold]}))
+        .mark_rule(strokeWidth=2, strokeDash=[4, 3])
+        .encode(x=alt.X("threshold:Q", scale=scale))
+    )
+    return (track + bar + line).properties(height=24)
 
 
 def show_prediction_page(model_info, models, model_name, threshold):
@@ -193,86 +286,83 @@ def show_prediction_page(model_info, models, model_name, threshold):
     Returns:
         Nothing (draws on the page).
     """
-    start_choice = st.radio(
-        "Start from",
-        ["Typical session", "Example buyer", "Example browser"],
-        horizontal=True,
-        help="Typical session = median/most common values from the training data. "
-        "The examples are real sessions from the dataset.",
-    )
-    start_values = load_starting_values(start_choice, model_info)
-    key_prefix = start_choice + "_"
+    column_inputs, column_result = st.columns([3, 2], gap="large")
 
-    session_values = {}
-    column_pages, column_behaviour, column_context = st.columns(3)
-    with column_pages:
-        st.subheader("Pages visited")
-        for feature in [
-            "Administrative",
-            "Administrative_Duration",
-            "Informational",
-            "Informational_Duration",
-            "ProductRelated",
-            "ProductRelated_Duration",
-        ]:
-            session_values[feature] = number_input(feature, start_values, model_info, key_prefix)
-    with column_behaviour:
-        st.subheader("Behaviour")
-        for feature in ["PageValues", "BounceRates", "ExitRates", "SpecialDay"]:
-            session_values[feature] = number_input(feature, start_values, model_info, key_prefix)
-        session_values["Weekend"] = st.checkbox(
-            "Weekend",
-            value=bool(start_values["Weekend"]),
-            help=FEATURE_HELP["Weekend"],
-            key=key_prefix + "Weekend",
+    with column_inputs:
+        start_choice = st.radio(
+            "Start from",
+            ["Typical session", "Example buyer", "Example browser"],
+            horizontal=True,
+            help="Typical session = median or most common values from the training data. "
+            "The examples are real sessions from the dataset.",
         )
-    with column_context:
-        st.subheader("Visit context")
-        for feature in ["Month", "VisitorType", "TrafficType", "Region", "Browser", "OperatingSystems"]:
-            session_values[feature] = choice_input(feature, start_values, model_info, key_prefix)
+        start_values = load_starting_values(start_choice, model_info)
+        key_prefix = start_choice + "_"
+
+        session_values = {}
+        column_pages, column_behaviour = st.columns(2)
+        with column_pages:
+            st.subheader("Pages visited", anchor=False)
+            for feature in COUNT_FEATURES + DURATION_FEATURES:
+                session_values[feature] = number_input(feature, start_values, model_info, key_prefix)
+        with column_behaviour:
+            st.subheader("Behaviour", anchor=False)
+            for feature in ["PageValues", "BounceRates", "ExitRates", "SpecialDay"]:
+                session_values[feature] = number_input(feature, start_values, model_info, key_prefix)
+            for feature in ["Month", "VisitorType"]:
+                session_values[feature] = choice_input(feature, start_values, model_info, key_prefix)
+            session_values["Weekend"] = st.checkbox(
+                FEATURE_LABELS["Weekend"],
+                value=bool(start_values["Weekend"]),
+                help=feature_help("Weekend"),
+                key=key_prefix + "Weekend",
+            )
+        with st.expander("Traffic, region and device codes"):
+            column_left, column_right = st.columns(2)
+            with column_left:
+                for feature in ["TrafficType", "Region"]:
+                    session_values[feature] = choice_input(feature, start_values, model_info, key_prefix)
+            with column_right:
+                for feature in ["Browser", "OperatingSystems"]:
+                    session_values[feature] = choice_input(feature, start_values, model_info, key_prefix)
 
     session = prepare_session(session_values)
     result = predict_session(models[model_name], session, threshold)
 
-    st.divider()
-    st.subheader("Prediction")
-    column_number, column_decision = st.columns([1, 2])
-    with column_number:
-        st.metric("Purchase probability", "{:.1%}".format(result["probability"]))
-        st.progress(min(max(result["probability"], 0.0), 1.0))
-        st.caption("Model: " + model_name + " | default 0.5 cutoff says: " + result["label"])
-    with column_decision:
+    with column_result:
         if result["passes_threshold"]:
-            st.success(f"Above the business threshold ({threshold:.2f}): send the discount offer.")
+            st.header("Send the discount offer", anchor=False)
         else:
-            st.warning(f"Below the business threshold ({threshold:.2f}): do not send the offer.")
+            st.header("Don't send the offer", anchor=False)
+        st.metric("Purchase probability", "{:.1%}".format(result["probability"]))
+        st.altair_chart(probability_chart(result["probability"], threshold), width="stretch")
+        st.caption(
+            f"Dashed line: the business threshold, {threshold:.2f}. "
+            f"At the default 0.5 cutoff the model predicts {result['label']}."
+        )
         if model_name == "Naive Bayes (baseline)":
-            st.info(
+            st.caption(
                 "Naive Bayes gives extreme, badly calibrated probabilities on this data. "
                 "Treat it as a baseline only."
             )
 
-    st.subheader("What drives this model")
-    importance = pd.Series(model_info["permutation_importance"][model_name]).sort_values(ascending=False)
-    importance_frame = importance.head(8).rename("Drop in ROC-AUC when shuffled").to_frame()
-    st.bar_chart(importance_frame, horizontal=True)
-    st.caption(
-        "Permutation importance on the test set: how much the model's ROC-AUC drops when a "
-        "feature's values are shuffled. This describes the model overall, not this one session."
-    )
+        if model_name == DECISION_TREE:
+            st.subheader("Decision path", anchor=False)
+            rules = describe_decision_path(models[DECISION_TREE], session)
+            for step_number, rule in enumerate(rules, start=1):
+                st.markdown(f"{step_number}. {readable_rule(rule)}")
+        else:
+            st.caption("Pick the Decision Tree in the sidebar to see the rules it followed for this session.")
 
-    if model_name == DECISION_TREE:
-        st.subheader("Decision path for this session")
-        rules = describe_decision_path(models[DECISION_TREE], session)
-        for step_number, rule in enumerate(rules, start=1):
-            st.markdown(f"{step_number}. {rule}")
-        st.caption(
-            "The questions the Decision Tree asked, from the root to the leaf that made this prediction."
-        )
-    else:
-        st.caption(
-            "Pick the Decision Tree in the sidebar to see the exact rules it followed for this session."
-        )
+    st.divider()
+    st.subheader("What drives this model", anchor=False)
+    importance = pd.Series(model_info["permutation_importance"][model_name]).sort_values(ascending=False)
+    importance = importance.head(8).rename(index=FEATURE_LABELS)
+    st.bar_chart(importance.rename("Drop in ROC-AUC").to_frame(), horizontal=True)
+    st.caption(
+        "How much the model's test ROC-AUC drops when an input is shuffled. "
+        "This describes the model overall, not this one session."
+    )
 
 
 def show_table(title, file_name):
@@ -287,28 +377,28 @@ def show_table(title, file_name):
     """
     path = os.path.join(OUTPUTS_FOLDER, file_name)
     if os.path.isfile(path):
-        st.subheader(title)
+        st.subheader(title, anchor=False)
         st.dataframe(pd.read_csv(path), hide_index=True, width="stretch")
 
 
-def show_figure(caption, file_name):
+def show_figure(file_name):
     """
-    Show an image from outputs/figures/ if it exists.
+    Show an image from outputs/figures/ if it exists. Every figure has its
+    own title, so no caption is added.
 
-    Inputs:
-        caption: text under the image.
+    Input:
         file_name: the image file name.
     Returns:
         Nothing.
     """
     path = os.path.join(FIGURES_FOLDER, file_name)
     if os.path.isfile(path):
-        st.image(path, caption=caption, width="stretch")
+        st.image(path, width="stretch")
 
 
 def show_comparison_page(model_info):
     """
-    Page 2: model comparison tables and key figures.
+    Page 2: model comparison tables and key figures, one tab per question.
 
     Input:
         model_info: the saved model information.
@@ -319,27 +409,34 @@ def show_comparison_page(model_info):
         "Best model by cross-validated F1: **" + model_info["best_model"] + "**. "
         "XGBoost is a benchmark beyond the course; the Decision Tree and KNN are the main models."
     )
-    show_table("Test-set scores (threshold 0.5)", "model_comparison.csv")
-    show_figure("ROC curves", "roc_curves.png")
-    show_figure("Confusion matrices", "confusion_matrices.png")
-    show_table("Thresholds: default vs best F1 vs best profit", "threshold_comparison.csv")
-    show_figure("Profit and F1 against the threshold", "profit_vs_threshold.png")
-    show_figure("Permutation importance for every model", "permutation_importance.png")
-    show_figure("Top 3 levels of the Decision Tree", "decision_tree_top_levels.png")
-    show_table("Ablation: scores without PageValues", "ablation_metrics.csv")
-    show_figure("Ablation scores", "ablation_scores.png")
-    show_figure("Error analysis of the best model", "error_analysis.png")
-
-    st.subheader("Deeper analysis")
-    show_table("95% bootstrap confidence intervals (test set)", "confidence_intervals.csv")
-    show_table("McNemar's test: do two models make different mistakes?", "mcnemar_tests.csv")
-    show_figure("Learning curves", "learning_curves.png")
-    show_figure("Validation curves", "validation_curves.png")
-    show_figure("Partial dependence", "partial_dependence.png")
-    show_table("Calibration before and after isotonic calibration", "calibration_summary.csv")
-    show_figure("Reliability diagram before and after calibration", "calibration_before_after.png")
-    show_figure("Best threshold for other business assumptions", "sensitivity_thresholds.png")
-    show_figure("F1 by visitor type and month", "slice_scores.png")
+    scores_tab, threshold_tab, drivers_tab, ablation_tab, errors_tab, reliability_tab = st.tabs(
+        ["Scores", "Threshold", "What drives predictions", "Without PageValues", "Errors", "Reliability"]
+    )
+    with scores_tab:
+        show_table("Test-set scores (threshold 0.5)", "model_comparison.csv")
+        show_figure("roc_curves.png")
+        show_figure("confusion_matrices.png")
+        show_table("95% bootstrap confidence intervals (test set)", "confidence_intervals.csv")
+        show_table("McNemar's test: do two models make different mistakes?", "mcnemar_tests.csv")
+    with threshold_tab:
+        show_table("Default vs best F1 vs best profit", "threshold_comparison.csv")
+        show_figure("profit_vs_threshold.png")
+        show_figure("sensitivity_thresholds.png")
+    with drivers_tab:
+        show_figure("permutation_importance.png")
+        show_figure("partial_dependence.png")
+        show_figure("decision_tree_top_levels.png")
+    with ablation_tab:
+        show_table("Scores without PageValues", "ablation_metrics.csv")
+        show_figure("ablation_scores.png")
+    with errors_tab:
+        show_figure("error_analysis.png")
+        show_figure("slice_scores.png")
+    with reliability_tab:
+        show_figure("learning_curves.png")
+        show_figure("validation_curves.png")
+        show_table("Calibration before and after isotonic calibration", "calibration_summary.csv")
+        show_figure("calibration_before_after.png")
 
 
 def main():
@@ -350,7 +447,7 @@ def main():
         Nothing.
     """
     st.set_page_config(page_title="Predator: purchase prediction", layout="wide")
-    st.title("Predator: will this session end in a purchase?")
+    st.title("Predator", anchor=False)
 
     if not models_are_available():
         st.error(
@@ -362,17 +459,19 @@ def main():
     model_info, models, out_of_fold = load_everything()
 
     with st.sidebar:
-        st.header("Settings")
         best_model = model_info["best_model"]
-        labels = [name + (" (best)" if name == best_model else "") for name in MODEL_NAMES]
-        picked_label = st.selectbox("Model", labels, index=MODEL_NAMES.index(best_model))
-        model_name = MODEL_NAMES[labels.index(picked_label)]
+        model_name = st.selectbox(
+            "Model",
+            MODEL_NAMES,
+            index=MODEL_NAMES.index(best_model),
+            format_func=lambda name: name + " · best" if name == best_model else name,
+        )
 
         # The business assumptions start at the values main.py used. Changing
         # them re-tunes the threshold on the out-of-fold training
         # probabilities, exactly like main.py does (the test set is not used).
         assumptions = model_info["business_assumptions"]
-        st.subheader("Business assumptions")
+        st.subheader("Business assumptions", anchor=False)
         order_profit = st.number_input(
             "Order profit ($)",
             min_value=1.0,
@@ -417,9 +516,11 @@ def main():
         )
         if best_profit <= 0:
             st.caption("No threshold makes a profit with these assumptions: send no offers.")
+        break_even = min(break_even_probability(order_profit, offer_cost, conversion_boost), 1.0)
         st.caption(
-            f"Best profit: {best_threshold:.2f} | Best F1: {model_info['thresholds'][model_name]['best_f1']:.2f}"
-            f" | Break-even probability: {min(break_even_probability(order_profit, offer_cost, conversion_boost), 1.0):.2f}"
+            f"Best for profit: {best_threshold:.2f}  \n"
+            f"Best for F1: {model_info['thresholds'][model_name]['best_f1']:.2f}  \n"
+            f"Break-even probability: {break_even:.2f}"
         )
 
     prediction_tab, comparison_tab = st.tabs(["Predict a session", "Model comparison"])
