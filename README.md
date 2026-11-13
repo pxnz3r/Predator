@@ -76,7 +76,7 @@ If the file is missing, `main.py` stops with a message explaining these steps. O
 
 ## Run it
 
-Python 3.12 or newer. Dependencies are declared in `pyproject.toml` and pinned in `uv.lock`, so [uv](https://docs.astral.sh/uv/) installs the exact versions the results were produced with:
+Python 3.15 or newer. Dependencies are declared in `pyproject.toml` and pinned in `uv.lock`, so [uv](https://docs.astral.sh/uv/) installs the exact versions the results were produced with:
 
 ```bash
 git clone https://github.com/YOUR_GITHUB_USERNAME/Predator.git
