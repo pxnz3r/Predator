@@ -61,7 +61,7 @@ Model name constants (`DECISION_TREE`, `KNN`, `KNN_UNDERSAMPLED`, `NAIVE_BAYES`,
 | `tune_model(...)` | GridSearchCV (5-fold stratified, F1) for one model; undersamples first for the undersampled KNN |
 | `out_of_fold_probabilities(...)` | Hand-written 5-fold loop: a probability for every training session from a model that did not see it |
 | `train_all_models(train_features, train_target, ...)` | Tunes all five models, adds out-of-fold probabilities and CV F1 |
-| `save_models(results)` / `load_models()` | joblib save/load of the fitted pipelines |
+| `save_models(results)` | joblib save of the fitted pipelines (`predict.load_model_by_name()` loads one) |
 | `save_model_info(info)` / `load_model_info()` | `models/model_info.json` for the app and CLI |
 
 ## `predator/evaluate.py`

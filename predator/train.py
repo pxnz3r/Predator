@@ -237,28 +237,6 @@ def save_models(results, folder=MODELS_FOLDER, file_prefix=""):
     return saved_paths
 
 
-def load_models(folder=MODELS_FOLDER):
-    """
-    Load the saved pipelines from the models folder.
-
-    Input:
-        folder: the folder the models were saved in.
-    Returns:
-        A dictionary: model name -> fitted pipeline.
-    Raises:
-        FileNotFoundError if a model file is missing (run main.py first).
-    """
-    models = {}
-    for model_name in MODEL_NAMES:
-        path = os.path.join(folder, MODEL_FILE_NAMES[model_name])
-        if not os.path.isfile(path):
-            raise FileNotFoundError(
-                "Model file not found: " + path + "\nRun 'python main.py' first to train and save the models."
-            )
-        models[model_name] = joblib.load(path)
-    return models
-
-
 def save_model_info(model_info, folder=MODELS_FOLDER):
     """
     Save extra information about the trained models as JSON.
