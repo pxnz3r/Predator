@@ -15,12 +15,11 @@ import json
 import os
 import sys
 
-import joblib
 import numpy as np
 import pandas as pd
 
 from predator.data import ALL_FEATURES, CATEGORICAL_FEATURES, NUMERICAL_FEATURES
-from predator.train import MODELS_FOLDER, load_model_info
+from predator.train import MODELS_FOLDER, load_model_info, load_pipeline
 
 # Categorical columns that hold whole numbers (codes) in the dataset.
 INTEGER_CODE_FEATURES = ["OperatingSystems", "Browser", "Region", "TrafficType"]
@@ -135,7 +134,7 @@ def load_model_by_name(model_name, model_info, folder=MODELS_FOLDER):
     path = os.path.join(folder, model_info["model_files"][model_name])
     if not os.path.isfile(path):
         raise FileNotFoundError(path + " not found. Run 'python main.py' first.")
-    return joblib.load(path)
+    return load_pipeline(path)
 
 
 def main():

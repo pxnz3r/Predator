@@ -114,7 +114,7 @@ The best model's test predictions at its best-profit threshold are split into ca
 
 ## 13. Saving
 
-Each fitted pipeline (preprocessing plus model) is saved with joblib to `models/`, so it accepts raw session data directly. `models/model_info.json` stores the best model's name, the chosen thresholds, the business assumptions, default input values and the permutation importance, for `predict.py` and `app.py`. `models/oof_probabilities.csv` holds the out-of-fold training probabilities the app re-tunes the threshold with. `models/` is committed so the hosted app works without training ([deploy.md](deploy.md)).
+Each fitted pipeline (preprocessing plus model) is saved with joblib to `models/`, so it accepts raw session data directly. The XGBoost model inside its pipeline is saved in XGBoost's own JSON format instead (`models/xgboost_benchmark.json`), because a pickled XGBoost model saved on Linux does not load on Windows. `models/model_info.json` stores the best model's name, the chosen thresholds, the business assumptions, default input values and the permutation importance, for `predict.py` and `app.py`. `models/oof_probabilities.csv` holds the out-of-fold training probabilities the app re-tunes the threshold with. `models/` is committed so the hosted app works without training ([deploy.md](deploy.md)).
 
 ## Is PageValues leaking the answer?
 

@@ -24,6 +24,8 @@ import pandas as pd
 from sklearn.base import clone
 from sklearn.metrics import f1_score
 from sklearn.model_selection import GridSearchCV, StratifiedKFold
+from sklearn.pipeline import Pipeline
+from xgboost import XGBClassifier
 
 from predator.data import CATEGORICAL_FEATURES, NUMERICAL_FEATURES, RANDOM_STATE
 from predator.models import (
@@ -235,10 +237,61 @@ def save_models(results, folder=MODELS_FOLDER, file_prefix=""):
     saved_paths = {}
     for model_name, result in results.items():
         path = os.path.join(folder, file_prefix + MODEL_FILE_NAMES[model_name])
-        joblib.dump(result["pipeline"], path)
+        save_pipeline(result["pipeline"], path)
         saved_paths[model_name] = path
         print("  Saved", path)
     return saved_paths
+
+
+def xgboost_file_for(path):
+    """
+    Where the XGBoost model of a saved pipeline goes.
+
+    Input:
+        path: the pipeline file, e.g. "models/xgboost_benchmark.joblib".
+    Returns:
+        e.g. "models/xgboost_benchmark.json".
+    """
+    return os.path.splitext(path)[0] + ".json"
+
+
+def save_pipeline(pipeline, path):
+    """
+    Save one fitted pipeline with joblib.
+
+    An XGBoost model is saved separately in XGBoost's own JSON format and
+    left out of the joblib file. A pickled XGBoost model saved on Linux
+    does not load on Windows ("input stream corrupted"); the JSON format
+    loads on every platform.
+
+    Inputs:
+        pipeline: the fitted pipeline.
+        path: the joblib file to write.
+    Returns:
+        Nothing.
+    """
+    model = pipeline.named_steps["model"]
+    if isinstance(model, XGBClassifier):
+        model.save_model(xgboost_file_for(path))
+        pipeline = Pipeline(pipeline.steps[:-1] + [("model", "passthrough")])
+    joblib.dump(pipeline, path)
+
+
+def load_pipeline(path):
+    """
+    Load a pipeline saved by save_pipeline().
+
+    Input:
+        path: the joblib file.
+    Returns:
+        The fitted pipeline, with its XGBoost model loaded back if it has one.
+    """
+    pipeline = joblib.load(path)
+    if pipeline.named_steps["model"] == "passthrough":
+        model = XGBClassifier()
+        model.load_model(xgboost_file_for(path))
+        pipeline.steps[-1] = ("model", model)
+    return pipeline
 
 
 OUT_OF_FOLD_FILE = "oof_probabilities.csv"
