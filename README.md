@@ -4,7 +4,14 @@
 
 <p>Predicts whether an online shopping session ends in a purchase, and explains which behaviours drive the prediction.<br>Decision Tree and KNN, a Naive Bayes baseline and an XGBoost benchmark, with a profit-based decision threshold and a Streamlit demo.</p>
 
-<p><a href="https://www.kaggle.com/code/YOUR_KAGGLE_USERNAME/predator-purchase-prediction">Kaggle notebook</a> · <a href="docs/results.md">Results</a> · <a href="docs/methodology.md">Methodology</a></p>
+<p>
+<a href="https://github.com/YOUR_GITHUB_USERNAME/Predator/actions/workflows/ci.yml"><img src="https://github.com/YOUR_GITHUB_USERNAME/Predator/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+<img src="https://img.shields.io/badge/python-3.15-blue" alt="Python 3.15">
+<a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-green" alt="MIT license"></a>
+<a href="https://YOUR_APP_SUBDOMAIN.streamlit.app"><img src="https://static.streamlit.io/badges/streamlit_badge_black_white.svg" alt="Open in Streamlit"></a>
+</p>
+
+<p><a href="https://YOUR_APP_SUBDOMAIN.streamlit.app">Live demo</a> · <a href="https://www.kaggle.com/code/YOUR_KAGGLE_USERNAME/predator-purchase-prediction">Kaggle notebook</a> · <a href="docs/results.md">Results</a> · <a href="docs/methodology.md">Methodology</a> · <a href="docs/model_card.md">Model card</a></p>
 
 <img src="outputs/figures/permutation_importance.png" width="720" alt="Permutation importance heatmap: PageValues dominates for every model">
 
@@ -14,19 +21,22 @@
 
 1. **Load and check** 12,330 real browsing sessions (17 features, 15.5% buyers) and explore them.
 2. **Train** a Decision Tree, KNN (with and without undersampling), a Naive Bayes baseline and an XGBoost benchmark, each tuned with 5-fold stratified cross-validation on F1, inside a leak-free scikit-learn pipeline.
-3. **Explain** the models with tree importance, permutation importance and an ablation that retrains everything without `PageValues`.
-4. **Pick a threshold** that maximises the profit of sending discount offers, instead of the default 0.5.
-5. **Study the mistakes** and **try it live** in the Streamlit app or from the command line.
+3. **Test how sure the scores are** with bootstrap confidence intervals, McNemar's test, per-group slices, and learning and validation curves.
+4. **Explain** the models with tree importance, permutation importance, partial dependence and an ablation that retrains everything without `PageValues`.
+5. **Pick a threshold** that maximises the profit of sending discount offers, check how it moves with the assumptions, and calibrate the probabilities so the threshold has a meaning.
+6. **Study the mistakes** and **try it live** in the Streamlit app or from the command line.
 
 ## What you get
 
-**One command for the whole study.** `python main.py` runs every step in about 3 minutes on a 4-core machine and writes 16 figures and 13 result files to `outputs/`.
+**One command for the whole study.** `python main.py` runs every step in about 4 minutes on a 4-core machine and writes 23 figures and 21 result files to `outputs/`.
 
 **Honest evaluation.** Preprocessing is fitted on training data only, the best model and thresholds are chosen on cross-validation, and the test set is used once.
 
 **Explanations, not just scores.** Every model is compared on the same 17 features, the Decision Tree is drawn, and the app prints the exact path of questions the tree asked for any session.
 
-**A business angle.** Illustrative profit assumptions sit at the top of `predator/threshold.py`; change them and re-run to see the best threshold move.
+**A business angle.** Illustrative profit assumptions sit at the top of `predator/threshold.py`. The app has them as inputs and re-tunes the threshold live; a sensitivity grid shows how far it moves.
+
+**Limits stated up front.** A [model card](docs/model_card.md) covers intended use, per-group performance and risks, including whether `PageValues` leaks the answer.
 
 **Readable code.** Plain functions with docstrings and comments that explain the AI concepts as they come up: Gini and entropy, distances and scaling, the Naive Bayes assumption, boosting, cross-validation, data leakage and thresholds.
 
@@ -42,6 +52,8 @@ Test set (2,466 sessions), threshold 0.5. The best model is chosen by cross-vali
 | Naive Bayes | Baseline | 0.299 | 0.173 | 0.974 | 0.293 | 0.733 |
 | **XGBoost** | **Benchmark (beyond the course)** | **0.673** | 0.545 | 0.791 | **0.645** | **0.929** |
 
+95% bootstrap intervals: Decision Tree F1 0.590 to 0.661, XGBoost 0.609 to 0.679. They overlap, but McNemar's test on the same sessions says XGBoost makes fewer mistakes (p = 0.004).
+
 <p align="center">
 <img src="outputs/figures/roc_curves.png" width="430" alt="ROC curves of all models">
 <img src="outputs/figures/decision_tree_top_levels.png" width="430" alt="Top three levels of the trained Decision Tree">
@@ -55,9 +67,13 @@ Test set (2,466 sessions), threshold 0.5. The best model is chosen by cross-vali
 
 **Behaviour fills in the rest.** Without PageValues, the models fall back on exit rate, time on product pages and visitor type. They help (XGBoost still reaches ROC-AUC 0.77) but cannot replace it.
 
-**The Decision Tree is the recommended course model.** It reaches 97% of the XGBoost benchmark's F1 and stays fully readable.
+**The Decision Tree is the recommended course model.** It reaches 97% of the XGBoost benchmark's F1 and stays fully readable. Its validation curve peaks at depth 1 to 2 (CV F1 0.667): almost all of its skill is the PageValues split.
 
-**0.5 is not the best cutoff.** With an $18 gain per caught buyer and a $6 cost per wasted offer, the Decision Tree earns most at 0.70 and targets a quarter fewer sessions.
+**PageValues may leak the label.** It is computed from purchases that followed each page; if those include the session's own purchase, the full scores are optimistic. Without it the tree drops to F1 0.384, so live performance likely lies between the two.
+
+**0.5 is not the best cutoff.** With an $18 gain per caught buyer and a $6 cost per wasted offer, the Decision Tree earns most at 0.70 and targets a quarter fewer sessions. Across other plausible costs and boosts the best threshold ranges from 0.13 to "send no offers".
+
+**Raw probabilities are inflated.** Class weighting pushes the tree's average probability to 0.28 against a real rate of 0.155. After isotonic calibration its Brier score falls from 0.109 to 0.072, and the plain break-even rule (offer when p > 0.25) earns $4,086 on the test set.
 
 **Missed buyers look like browsers.** 80% of the buyers the best model misses have PageValues = 0. False alarms are mostly returning visitors who reached valuable pages and left.
 
@@ -97,7 +113,7 @@ Without uv: `python -m venv .venv`, activate it, then `pip install -e . --group 
 | Lint and format check | `ruff check . && ruff format --check .` |
 | Open the walkthrough | `jupyter notebook notebooks/predator_walkthrough.ipynb` |
 
-Run `main.py` before the app or the prediction script; they load the models it saves to `models/`.
+The trained models are committed in `models/`, so the app and the prediction script work straight after `uv sync`. Re-run `main.py` after changing the pipeline or upgrading dependencies, and commit `models/` again. Hosting the app: [docs/deploy.md](docs/deploy.md).
 
 Example output:
 
@@ -112,14 +128,15 @@ Business threshold:    0.50 -> YES - send the discount offer
 
 | Path | Contents |
 |---|---|
-| `predator/` | The package: `data`, `preprocess`, `models`, `train`, `evaluate`, `explain`, `threshold`, `errors`, `predict` |
+| `predator/` | The package: `data`, `preprocess`, `models`, `train`, `evaluate`, `significance`, `curves`, `explain`, `calibration`, `threshold`, `errors`, `predict` |
 | `main.py` | The whole pipeline in one command |
 | `app.py` | Streamlit demo: prediction with decision path, and model comparison |
 | `notebooks/predator_walkthrough.ipynb` | Step-by-step walkthrough with explanations |
 | `kaggle/` | Self-contained Kaggle notebook and `kernel-metadata.json` |
+| `models/` | Trained pipelines, `model_info.json` and out-of-fold probabilities used by the app |
 | `outputs/` | Figures and tables from the last run |
 | `tests/` | pytest tests |
-| `docs/` | [Methodology](docs/methodology.md), [algorithms](docs/algorithms.md), [business threshold](docs/business_threshold.md), [error analysis](docs/error_analysis.md), [results](docs/results.md), [code guide](docs/code_guide.md), [Kaggle publishing](docs/kaggle_publishing.md) |
+| `docs/` | [Methodology](docs/methodology.md), [algorithms](docs/algorithms.md), [business threshold](docs/business_threshold.md), [error analysis](docs/error_analysis.md), [results](docs/results.md), [model card](docs/model_card.md), [code guide](docs/code_guide.md), [deploy](docs/deploy.md), [Kaggle publishing](docs/kaggle_publishing.md) |
 
 ## About
 

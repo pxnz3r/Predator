@@ -8,12 +8,12 @@ Python 3.15+ (deps in `pyproject.toml`, locked in `uv.lock`; `uv sync`), pandas,
 
 ## Layout
 
-- `predator/` the package: `data.py`, `preprocess.py`, `models.py`, `train.py`, `evaluate.py`, `explain.py`, `threshold.py`, `errors.py`, `predict.py`
+- `predator/` the package: `data.py`, `preprocess.py`, `models.py`, `train.py`, `evaluate.py`, `significance.py`, `curves.py`, `explain.py`, `calibration.py`, `threshold.py`, `errors.py`, `predict.py`
 - `main.py` runs the full pipeline; `app.py` is the Streamlit demo
 - `notebooks/predator_walkthrough.ipynb` walkthrough that imports the package
 - `kaggle/predator-kaggle.ipynb` self-contained copy of the pipeline for Kaggle (no package imports)
-- `outputs/` generated figures and CSV tables (committed), `models/` saved models (ignored), `data/` dataset (ignored)
-- `docs/` methodology, algorithms, business threshold, error analysis, code guide, results, Kaggle publishing
+- `outputs/` generated figures and CSV tables (committed), `models/` saved models, model_info.json and out-of-fold probabilities (committed for the hosted app; re-run `main.py` and commit after dependency upgrades), `data/` dataset (ignored)
+- `docs/` methodology, algorithms, business threshold, error analysis, code guide, results, model card, deploy, Kaggle publishing
 
 ## Commands
 
