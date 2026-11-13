@@ -19,7 +19,8 @@ import streamlit as st
 from predator.explain import describe_decision_path
 from predator.models import DECISION_TREE, MODEL_NAMES
 from predator.predict import load_model_by_name, predict_session, prepare_session
-from predator.train import MODELS_FOLDER
+from predator.threshold import break_even_probability, find_best_profit_threshold
+from predator.train import MODELS_FOLDER, OUT_OF_FOLD_FILE, load_out_of_fold_probabilities
 
 OUTPUTS_FOLDER = "outputs"
 FIGURES_FOLDER = os.path.join(OUTPUTS_FOLDER, "figures")
@@ -57,7 +58,9 @@ def load_everything():
     loaded models in st.session_state and only read the files the first time.
 
     Returns:
-        (model_info, models) where models is a dictionary name -> pipeline.
+        (model_info, models, out_of_fold) where models is a dictionary
+        name -> pipeline and out_of_fold holds the out-of-fold training
+        probabilities used to re-tune the threshold.
     """
     if "models" not in st.session_state:
         with open(os.path.join(MODELS_FOLDER, "model_info.json")) as file:
@@ -67,7 +70,8 @@ def load_everything():
             models[model_name] = load_model_by_name(model_name, model_info)
         st.session_state["model_info"] = model_info
         st.session_state["models"] = models
-    return st.session_state["model_info"], st.session_state["models"]
+        st.session_state["out_of_fold"] = load_out_of_fold_probabilities()
+    return st.session_state["model_info"], st.session_state["models"], st.session_state["out_of_fold"]
 
 
 def models_are_available():
@@ -75,10 +79,11 @@ def models_are_available():
     Check that main.py has been run and the saved models exist.
 
     Returns:
-        True if model_info.json and every model file are present.
+        True if model_info.json, the out-of-fold probabilities and every
+        model file are present.
     """
     info_path = os.path.join(MODELS_FOLDER, "model_info.json")
-    if not os.path.isfile(info_path):
+    if not os.path.isfile(info_path) or not os.path.isfile(os.path.join(MODELS_FOLDER, OUT_OF_FOLD_FILE)):
         return False
     with open(info_path) as file:
         model_files = json.load(file)["model_files"]
@@ -325,6 +330,17 @@ def show_comparison_page(model_info):
     show_figure("Ablation scores", "ablation_scores.png")
     show_figure("Error analysis of the best model", "error_analysis.png")
 
+    st.subheader("Deeper analysis")
+    show_table("95% bootstrap confidence intervals (test set)", "confidence_intervals.csv")
+    show_table("McNemar's test: do two models make different mistakes?", "mcnemar_tests.csv")
+    show_figure("Learning curves", "learning_curves.png")
+    show_figure("Validation curves", "validation_curves.png")
+    show_figure("Partial dependence", "partial_dependence.png")
+    show_table("Calibration before and after isotonic calibration", "calibration_summary.csv")
+    show_figure("Reliability diagram before and after calibration", "calibration_before_after.png")
+    show_figure("Best threshold for other business assumptions", "sensitivity_thresholds.png")
+    show_figure("F1 by visitor type and month", "slice_scores.png")
+
 
 def main():
     """
@@ -343,7 +359,7 @@ def main():
         st.code("python main.py")
         st.stop()
 
-    model_info, models = load_everything()
+    model_info, models, out_of_fold = load_everything()
 
     with st.sidebar:
         st.header("Settings")
@@ -352,31 +368,58 @@ def main():
         picked_label = st.selectbox("Model", labels, index=MODEL_NAMES.index(best_model))
         model_name = MODEL_NAMES[labels.index(picked_label)]
 
-        thresholds = model_info["thresholds"][model_name]
+        # The business assumptions start at the values main.py used. Changing
+        # them re-tunes the threshold on the out-of-fold training
+        # probabilities, exactly like main.py does (the test set is not used).
+        assumptions = model_info["business_assumptions"]
+        st.subheader("Business assumptions")
+        order_profit = st.number_input(
+            "Order profit ($)",
+            min_value=1.0,
+            value=float(assumptions["AVERAGE_ORDER_PROFIT"]),
+            step=5.0,
+            help="Average profit the shop makes on one order.",
+        )
+        offer_cost = st.number_input(
+            "Offer cost ($)",
+            min_value=0.0,
+            value=float(assumptions["OFFER_COST"]),
+            step=1.0,
+            help="What one discount offer costs, whether or not the visitor buys.",
+        )
+        conversion_boost = st.number_input(
+            "Offer conversion boost",
+            min_value=0.01,
+            max_value=1.0,
+            value=float(assumptions["OFFER_CONVERSION_BOOST"]),
+            step=0.05,
+            help="Share of the order profit the offer secures for a real buyer. Illustrative, like the other two.",
+        )
+
+        best_threshold, best_profit = find_best_profit_threshold(
+            out_of_fold["Revenue"].to_numpy(),
+            out_of_fold[model_name].to_numpy(),
+            order_profit,
+            offer_cost,
+            conversion_boost,
+        )
         threshold = st.slider(
             "Business threshold",
             min_value=0.01,
-            max_value=0.99,
-            value=float(thresholds["best_profit"]),
+            max_value=1.0,
+            value=best_threshold,
             step=0.01,
+            # A new key for every model and set of assumptions moves the
+            # slider back to the best threshold when one of them changes.
+            key=f"threshold-{model_name}-{order_profit}-{offer_cost}-{conversion_boost}",
             help="Send the offer when the purchase probability is at least this value. "
-            "Starts at the threshold that maximised profit on the training data.",
+            "Starts at the threshold that maximised profit on the training data for these assumptions.",
         )
+        if best_profit <= 0:
+            st.caption("No threshold makes a profit with these assumptions: send no offers.")
         st.caption(
-            "Best profit: {:.2f} | Best F1: {:.2f} | Default: 0.50".format(
-                thresholds["best_profit"], thresholds["best_f1"]
-            )
-        )
-
-        assumptions = model_info["business_assumptions"]
-        st.subheader("Business assumptions")
-        st.caption("Illustrative values, set at the top of predator/threshold.py.")
-        st.markdown(
-            "- Order profit: ${:.0f}\n- Offer cost: ${:.0f}\n- Offer conversion boost: {:.0%}".format(
-                assumptions["AVERAGE_ORDER_PROFIT"],
-                assumptions["OFFER_COST"],
-                assumptions["OFFER_CONVERSION_BOOST"],
-            )
+            f"Best profit: {best_threshold:.2f} | Best F1: {model_info['thresholds'][model_name]['best_f1']:.2f}"
+            f" | Break-even probability: {min(break_even_probability(order_profit, offer_cost, conversion_boost), 1.0):.2f}"
         )
 
     prediction_tab, comparison_tab = st.tabs(["Predict a session", "Model comparison"])
