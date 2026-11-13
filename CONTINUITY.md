@@ -17,19 +17,20 @@ Predator: purchase prediction on the UCI Online Shoppers dataset. Decision Tree 
 
 ## Now
 
-Building the 9 additions (user: "build them all", 2026-11-13). Order: analysis code, one main.py run, docs, app, presentation.
+Built the 9 additions (user: "build them all", 2026-11-13).
 
-1. Calibration: reliability diagram, Brier score, calibrated Decision Tree (`predator/calibration.py`) - todo
-2. Bootstrap 95% CIs for test F1/ROC-AUC + McNemar Decision Tree vs XGBoost (`predator/significance.py`) - todo
-3. Learning and validation curves (`predator/curves.py`) - todo
-4. Business sensitivity analysis (threshold.py) + assumption inputs in the app - todo
-5. Partial dependence plots for PageValues and Month (explain.py) - todo
-6. Slice analysis by VisitorType/Month/Region (evaluate.py) + docs/model_card.md - todo
-7. PageValues leakage discussion (docs/methodology.md, results, README) - todo
-8. Deploy prep for Streamlit Community Cloud (commit models/, steps in docs/deploy.md) - todo; the deploy itself needs the user's account
-9. README badges; GitHub description, topics and v1.0.0 release - todo; the GitHub settings need the user (no tool), after the repo is recreated
+1. Calibration: reliability diagram, Brier score, calibrated Decision Tree (`predator/calibration.py`) - done 5f5127e
+2. Bootstrap 95% CIs + McNemar (`predator/significance.py`) - done d8875de
+3. Learning and validation curves (`predator/curves.py`) - done 3a05ff6
+4. Business sensitivity analysis + assumption inputs in the app - done 8fb95c3, 27eea5c
+5. Partial dependence plots - done d135c54
+6. Slice analysis + docs/model_card.md - done e2edbd2, c5d116c
+7. PageValues leakage discussion - done 3b776e0, 2278eff, efc426a
+8. Deploy prep for Streamlit Community Cloud - done 3e7fe6e; blocked: the deploy itself needs the user's Streamlit account (steps in docs/deploy.md), then replace YOUR_APP_SUBDOMAIN in README.md
+9. README badges - done efc426a; blocked: GitHub description, topics and v1.0.0 release need the user (no tool), after the repo is recreated; replace YOUR_GITHUB_USERNAME
 
 ## Open problems
 
+- The Decision Tree's validation curve peaks at depth 1 to 2 (CV F1 0.667), outside the tuning grid [3, 5, 7, 10, 15, None]. Documented in results.md; the grid was left as is to keep the reported numbers stable.
 - Old commits 7c1bb42/797ef4b (LICENSE with real names, agent files) stay reachable by SHA on GitHub until the user deletes and recreates the public repo. Then push the clean branch again.
 - README/Kaggle links use YOUR_GITHUB_USERNAME / YOUR_KAGGLE_USERNAME placeholders by request.
