@@ -1,0 +1,6 @@
+Model,Top 5 with all features,Top 5 without PageValues
+Decision Tree,"PageValues, Month, ProductRelated, ProductRelated_Duration, Administrative_Duration","ExitRates, ProductRelated_Duration, ProductRelated, Month, BounceRates"
+KNN,"PageValues, VisitorType, Month, Weekend, ExitRates","Month, TrafficType, ExitRates, VisitorType, OperatingSystems"
+KNN (undersampled),"PageValues, Month, VisitorType, TrafficType, ExitRates","Month, VisitorType, ExitRates, ProductRelated_Duration, TrafficType"
+Naive Bayes (baseline),"PageValues, ExitRates, BounceRates, Month, TrafficType","ExitRates, BounceRates, Month, TrafficType, VisitorType"
+XGBoost (benchmark),"PageValues, Month, ExitRates, ProductRelated_Duration, ProductRelated","ExitRates, ProductRelated_Duration, Month, ProductRelated, Administrative_Duration"

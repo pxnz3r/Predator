@@ -1,0 +1,17 @@
+feature,Decision Tree,KNN,KNN (undersampled),Naive Bayes (baseline),XGBoost (benchmark)
+ExitRates,0.0946,0.0099,0.0189,0.0297,0.0874
+Month,0.0322,0.0196,0.0295,0.0245,0.07
+ProductRelated_Duration,0.0595,-0.0001,0.014,0.0017,0.0865
+ProductRelated,0.0416,0.0063,0.0093,0.0025,0.0295
+TrafficType,0.0032,0.0163,0.0136,0.0154,0.0119
+BounceRates,0.0176,0.0043,0.0024,0.0251,0.0022
+VisitorType,0.004,0.0088,0.0225,0.0056,0.0081
+Administrative,0.0077,0.0036,0.0032,0.0029,0.0063
+OperatingSystems,-0.0002,0.0075,0.0039,-0.001,0.0037
+Weekend,-0.0003,0.003,0.009,0.0,0.0017
+Browser,0.0,0.0067,0.0086,-0.0036,-0.001
+Administrative_Duration,-0.0019,-0.0057,0.0014,0.001,0.0128
+Region,-0.0026,-0.0017,0.0057,0.0034,0.0
+Informational,0.0,-0.0022,0.003,-0.0011,0.0027
+Informational_Duration,0.0,-0.0014,0.0015,0.0037,-0.0014
+SpecialDay,0.0024,-0.0006,-0.0012,0.0015,-0.0008

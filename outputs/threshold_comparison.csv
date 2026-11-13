@@ -1,0 +1,16 @@
+Model,Threshold type,Threshold,Precision,Recall,F1,Sessions targeted,Profit ($)
+Decision Tree,Default 0.5,0.5,0.512,0.806,0.627,601,3786.0
+Decision Tree,Best F1,0.76,0.681,0.641,0.66,360,3720.0
+Decision Tree,Best profit,0.7,0.611,0.715,0.659,447,3870.0
+KNN,Default 0.5,0.5,0.576,0.395,0.469,262,2052.0
+KNN,Best F1,0.35,0.504,0.442,0.471,335,2046.0
+KNN,Best profit,0.35,0.504,0.442,0.471,335,2046.0
+KNN (undersampled),Default 0.5,0.5,0.401,0.728,0.517,694,2508.0
+KNN (undersampled),Best F1,0.53,0.433,0.694,0.533,612,2688.0
+KNN (undersampled),Best profit,0.53,0.433,0.694,0.533,612,2688.0
+Naive Bayes (baseline),Default 0.5,0.5,0.173,0.974,0.293,2155,-4002.0
+Naive Bayes (baseline),Best F1,0.99,0.175,0.971,0.296,2124,-3840.0
+Naive Bayes (baseline),Best profit,0.99,0.175,0.971,0.296,2124,-3840.0
+XGBoost (benchmark),Default 0.5,0.5,0.545,0.791,0.645,554,3924.0
+XGBoost (benchmark),Best F1,0.62,0.62,0.73,0.671,450,3996.0
+XGBoost (benchmark),Best profit,0.5,0.545,0.791,0.645,554,3924.0

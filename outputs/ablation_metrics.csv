@@ -1,0 +1,6 @@
+Model,F1 (all features),F1 (no PageValues),ROC-AUC (all features),ROC-AUC (no PageValues),F1 change,ROC-AUC change
+Decision Tree,0.627,0.384,0.922,0.721,-0.243,-0.201
+KNN,0.469,0.261,0.734,0.562,-0.208,-0.172
+KNN (undersampled),0.517,0.356,0.843,0.723,-0.161,-0.12
+Naive Bayes (baseline),0.293,0.292,0.733,0.678,-0.001,-0.055
+XGBoost (benchmark),0.645,0.414,0.929,0.772,-0.231,-0.157

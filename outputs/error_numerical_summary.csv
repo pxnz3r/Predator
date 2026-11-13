@@ -1,0 +1,5 @@
+group,Administrative,Administrative_Duration,Informational,Informational_Duration,ProductRelated,ProductRelated_Duration,BounceRates,ExitRates,PageValues,SpecialDay,probability,sessions,share with PageValues = 0,median ProductRelated_Duration
+Caught buyer (TP),3.351,110.008,0.728,52.981,54.841,2176.859,0.004,0.019,31.605,0.032,0.862,302,0.066,1147.932
+Missed buyer (FN),2.962,90.035,0.838,81.261,40.25,1470.466,0.014,0.033,1.047,0.022,0.286,80,0.8,780.767
+False alarm (FP),4.52,178.429,1.083,68.07,61.417,2294.236,0.007,0.022,15.982,0.027,0.721,252,0.254,1661.658
+Correct non-buyer (TN),1.8,59.903,0.366,24.122,24.967,913.72,0.027,0.049,0.176,0.066,0.093,1832,0.972,424.433

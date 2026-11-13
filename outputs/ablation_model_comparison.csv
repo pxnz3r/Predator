@@ -1,0 +1,6 @@
+Model,Role,CV F1,Accuracy,Precision,Recall,F1,ROC-AUC
+Decision Tree,Main (course),0.397,0.685,0.276,0.636,0.384,0.721
+KNN,Main (course),0.281,0.765,0.254,0.267,0.261,0.562
+KNN (undersampled),Main (course),0.375,0.586,0.235,0.738,0.356,0.723
+Naive Bayes (baseline),Baseline,0.298,0.271,0.172,0.971,0.292,0.678
+XGBoost (benchmark),Benchmark (beyond course),0.427,0.697,0.296,0.691,0.414,0.772
