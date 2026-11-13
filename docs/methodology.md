@@ -71,25 +71,63 @@ Each model is scored once on the test set: precision, recall, F1, ROC-AUC, confu
 
 **Best model:** chosen by CV F1, not test F1, so the test set stays an honest estimate. XGBoost (benchmark) wins; the Decision Tree is the best main model.
 
-## 8. Feature contribution analysis
+**How sure are the scores?** (`predator/significance.py`)
+
+- **Bootstrap confidence intervals** (`confidence_intervals.csv`): the test set is resampled with replacement 1,000 times and every model is re-scored; the middle 95% of the scores is the interval.
+- **McNemar's test** (`mcnemar_tests.csv`): for two models on the same test sessions, it counts the sessions only one of them gets right. If the models were equally good, those counts would be about equal. The p-value comes from a chi-squared distribution with 1 degree of freedom, computed with `math.erfc`.
+
+**Slices** (`slice_analysis.csv`, `slice_scores.png`): precision, recall and F1 per visitor type, month and region, with the buyer count next to each score because small slices are noisy.
+
+## 8. Learning and validation curves
+
+`predator/curves.py`, same folds as the grid search, F1 scoring.
+
+- **Learning curves** (`learning_curves.png`): the tuned Decision Tree and KNN trained on 10% to 100% of the training data. The gap between training and cross-validated F1 shows overfitting; whether the cross-validated curve still rises shows whether more data would help.
+- **Validation curves** (`validation_curves.png`): Decision Tree F1 against `max_depth` and KNN F1 against `n_neighbors`, the other settings at their tuned values. They show underfitting on one side and overfitting on the other, and where the tuned value sits.
+
+## 9. Feature contribution analysis
 
 - **Tree importance** (`tree_feature_importance.png`): impurity decrease per one-hot column.
 - **Tree plot** (`decision_tree_top_levels.png`): the top 3 levels of the trained depth-7 tree.
 - **Permutation importance** (`permutation_importance.png`): shuffle one raw column of the test set, measure the drop in ROC-AUC, 5 repeats. Shuffling raw columns (before one-hot encoding) keeps the 17 original features comparable across all models. ROC-AUC is used because it does not depend on the threshold, which would favour some models.
 - **Ablation**: drop PageValues, retune and retrain every model with the same grids and folds, compare scores and the top 5 features.
+- **Partial dependence** (`partial_dependence.png`): for PageValues, Month and ExitRates, the feature is set to each value for 2,000 training sessions and the predictions are averaged. Permutation importance says how much a feature matters; partial dependence shows the direction and shape.
 - **Decision Tree vs XGBoost**: `outputs/tree_vs_xgboost.md`.
 
-## 9. Business threshold
+## 10. Calibration
+
+`predator/calibration.py`. ROC-AUC only checks the order of the probabilities; calibration checks the numbers: of the sessions given about 0.3, about 30% should buy. The Decision Tree (`class_weight="balanced"`) and XGBoost (`scale_pos_weight`) count buyers more during training, which pushes their probabilities up.
+
+- **Reliability diagrams** (`calibration_all_models.png`, `calibration_before_after.png`) and the **Brier score** (mean squared error of the probability, lower is better).
+- **Isotonic calibration** with `CalibratedClassifierCV` on the same 5 training folds, for the Decision Tree and XGBoost.
+- With calibrated probabilities the best threshold follows from the assumptions alone: send the offer when p is above offer cost / (order profit x conversion boost), 0.25 here (`threshold.break_even_probability`). `calibration_summary.csv` compares the test profit of that rule before and after calibration.
+
+## 11. Business threshold
 
 Thresholds from 0.01 to 0.99 are tried on the out-of-fold training probabilities; the best-F1 and best-profit thresholds are then applied to the test set and compared with 0.5. Details in [business_threshold.md](business_threshold.md).
 
-## 10. Error analysis
+**Sensitivity analysis** (`sensitivity_analysis.csv`, `sensitivity_thresholds.png`): the best-profit threshold for 36 combinations of offer cost ($2 to $12) and conversion boost (10% to 60%), on the same out-of-fold probabilities. When no threshold makes a profit, the answer is to send no offers. The app re-runs this search live when the assumptions are changed.
+
+## 12. Error analysis
 
 The best model's test predictions at its best-profit threshold are split into caught buyers, missed buyers, false alarms and correct non-buyers, and the groups are compared. Details in [error_analysis.md](error_analysis.md).
 
-## 11. Saving
+## 13. Saving
 
-Each fitted pipeline (preprocessing plus model) is saved with joblib to `models/`, so it accepts raw session data directly. `models/model_info.json` stores the best model's name, the chosen thresholds, the business assumptions, default input values and the permutation importance, for `predict.py` and `app.py`.
+Each fitted pipeline (preprocessing plus model) is saved with joblib to `models/`, so it accepts raw session data directly. `models/model_info.json` stores the best model's name, the chosen thresholds, the business assumptions, default input values and the permutation importance, for `predict.py` and `app.py`. `models/oof_probabilities.csv` holds the out-of-fold training probabilities the app re-tunes the threshold with. `models/` is committed so the hosted app works without training ([deploy.md](deploy.md)).
+
+## Is PageValues leaking the answer?
+
+PageValues is by far the strongest feature: 56% of sessions with PageValues above 0 buy, against 3.9% of the rest. The dataset defines it as "the average value for a web page that a user visited before completing an e-commerce transaction". In Google Analytics, a page's value is the revenue of the transactions that followed a view of that page, divided by the page's unique views.
+
+That creates a risk of **target leakage**. If page values were computed over the same period as the sessions, a buying session's own revenue raised the value of the pages it visited, so its PageValues partly records the outcome we predict. A model can then look better offline than it would be live, where only page values from earlier periods are known.
+
+The dataset does not say which period the values come from, so the leak cannot be measured exactly. Two facts bound it:
+
+- 3.9% of sessions with PageValues = 0 still buy, so PageValues is not a plain copy of the label.
+- The ablation (`ablation_metrics.csv`) is the no-leak lower bound: without PageValues the Decision Tree reaches F1 0.384 and ROC-AUC 0.721, and XGBoost 0.414 and 0.772.
+
+For a real deployment, page values should be computed from earlier periods only, and the honest expected performance lies between the ablation scores and the full scores.
 
 ## Choices we rejected
 
