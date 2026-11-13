@@ -1,0 +1,25 @@
+{
+  "id": "YOUR_KAGGLE_USERNAME/predator-purchase-prediction",
+  "title": "Predator: Customer Purchase Behavior Prediction",
+  "code_file": "predator-kaggle.ipynb",
+  "language": "python",
+  "kernel_type": "notebook",
+  "is_private": "true",
+  "enable_gpu": "false",
+  "enable_tpu": "false",
+  "enable_internet": "false",
+  "keywords": [
+    "classification",
+    "decision tree",
+    "knn",
+    "xgboost",
+    "e-commerce",
+    "feature importance"
+  ],
+  "dataset_sources": [
+    "henrysue/online-shoppers-intention"
+  ],
+  "competition_sources": [],
+  "kernel_sources": [],
+  "model_sources": []
+}
