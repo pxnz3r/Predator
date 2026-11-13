@@ -7,20 +7,24 @@ Steps:
     1. Load and check the data, draw EDA plots
     2. Split into training (80%) and test (20%) sets
     3. Tune and train all models with 5-fold cross-validation
-    4. Evaluate on the test set (table, ROC curves, confusion matrices)
-    5. Explain the models (feature importance, tree plot, permutation importance)
-    6. Ablation: retrain without PageValues
-    7. Business threshold tuning
-    8. Error analysis of the best model
-    9. Save the models and the information the app needs
+    4. Evaluate on the test set (table, ROC curves, confusion matrices,
+       bootstrap confidence intervals, McNemar's test, slices)
+    5. Learning and validation curves (overfitting and underfitting)
+    6. Explain the models (feature importance, tree plot, permutation
+       importance, partial dependence)
+    7. Ablation: retrain without PageValues
+    8. Probability calibration
+    9. Business threshold tuning and sensitivity analysis
+    10. Error analysis of the best model
+    11. Save the models and the information the app needs
 """
 
 import sys
 import time
 import warnings
 
-from predator import data, errors, evaluate, explain, threshold, train
-from predator.models import DECISION_TREE, MODEL_FILE_NAMES
+from predator import calibration, curves, data, errors, evaluate, explain, significance, threshold, train
+from predator.models import DECISION_TREE, KNN_UNDERSAMPLED, MODEL_FILE_NAMES, XGBOOST
 
 # Some libraries print warnings that are not useful for a student run.
 warnings.filterwarnings("ignore", category=FutureWarning)
@@ -147,32 +151,52 @@ def main():
     evaluate.plot_roc_curves(models, test_features, test_target)
     evaluate.plot_confusion_matrices(models, test_features, test_target)
     evaluate.plot_metric_comparison(comparison_table)
+    significance.run_significance_analysis(
+        models,
+        comparison_table,
+        test_features,
+        test_target,
+        pairs_to_compare=[(DECISION_TREE, XGBOOST), (DECISION_TREE, KNN_UNDERSAMPLED)],
+    )
+    evaluate.evaluate_slices(models, [DECISION_TREE, XGBOOST], test_features, test_target)
 
-    print_step(5, "Explain the models")
+    print_step(5, "Learning and validation curves")
+    curves.plot_learning_curves(models, train_features, train_target)
+    curves.plot_validation_curves(models, train_features, train_target)
+
+    print_step(6, "Explain the models")
     explain.plot_tree_feature_importance(models[DECISION_TREE])
     explain.plot_top_of_tree(models[DECISION_TREE], max_depth=3)
     importance_table = explain.permutation_importance_all_models(models, test_features, test_target)
     explain.write_tree_vs_xgboost_comparison(comparison_table, models, importance_table)
+    explain.plot_partial_dependence(models, [DECISION_TREE, XGBOOST], train_features)
 
-    print_step(6, "Ablation: retrain every model without PageValues")
+    print_step(7, "Ablation: retrain every model without PageValues")
     explain.run_ablation(
         train_features, train_target, test_features, test_target, comparison_table, importance_table
     )
 
-    print_step(7, "Business threshold tuning")
+    print_step(8, "Probability calibration")
+    calibration.run_calibration_analysis(
+        models, [DECISION_TREE, XGBOOST], train_features, train_target, test_features, test_target
+    )
+
+    print_step(9, "Business threshold tuning and sensitivity analysis")
     threshold_table, chosen_thresholds, training_curves = threshold.tune_thresholds(
         models, training_results, train_target, test_features, test_target
     )
     threshold.plot_profit_curves(training_curves, chosen_thresholds)
+    threshold.run_sensitivity_analysis(training_results, train_target, [DECISION_TREE, XGBOOST])
 
-    print_step(8, "Error analysis of the best model")
+    print_step(10, "Error analysis of the best model")
     best_threshold = chosen_thresholds[best_model_name]["best_profit"]
     errors.run_error_analysis(
         models[best_model_name], best_model_name, test_features, test_target, best_threshold
     )
 
-    print_step(9, "Save the models")
+    print_step(11, "Save the models")
     train.save_models(training_results)
+    print("  Saved", train.save_out_of_fold_probabilities(training_results, train_target))
     model_info = build_model_info(
         best_model_name,
         chosen_thresholds,

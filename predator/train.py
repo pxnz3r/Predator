@@ -20,6 +20,7 @@ import time
 
 import joblib
 import numpy as np
+import pandas as pd
 from sklearn.base import clone
 from sklearn.metrics import f1_score
 from sklearn.model_selection import GridSearchCV, StratifiedKFold
@@ -238,6 +239,42 @@ def save_models(results, folder=MODELS_FOLDER, file_prefix=""):
         saved_paths[model_name] = path
         print("  Saved", path)
     return saved_paths
+
+
+OUT_OF_FOLD_FILE = "oof_probabilities.csv"
+
+
+def save_out_of_fold_probabilities(training_results, train_target, folder=MODELS_FOLDER):
+    """
+    Save every model's out-of-fold training probabilities with the real labels.
+
+    The app uses them to find the best-profit threshold again when the
+    user changes the business assumptions, without touching the test set.
+
+    Inputs:
+        training_results: from train_all_models().
+        train_target: the training labels.
+        folder: where to save the CSV.
+    Returns:
+        The path of the saved file.
+    """
+    table = pd.DataFrame({"Revenue": np.asarray(train_target)})
+    for model_name, result in training_results.items():
+        table[model_name] = np.round(result["oof_probabilities"], 4)
+    os.makedirs(folder, exist_ok=True)
+    path = os.path.join(folder, OUT_OF_FOLD_FILE)
+    table.to_csv(path, index=False)
+    return path
+
+
+def load_out_of_fold_probabilities(folder=MODELS_FOLDER):
+    """
+    Load the file saved by save_out_of_fold_probabilities().
+
+    Returns:
+        A DataFrame with a "Revenue" column and one probability column per model.
+    """
+    return pd.read_csv(os.path.join(folder, OUT_OF_FOLD_FILE))
 
 
 def save_model_info(model_info, folder=MODELS_FOLDER):
