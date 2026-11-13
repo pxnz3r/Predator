@@ -17,8 +17,17 @@ Predator: purchase prediction on the UCI Online Shoppers dataset. Decision Tree 
 
 ## Now
 
-Health pass done (2026-11-13): ablation no longer overwrites classification_reports.txt (file_prefix), predict.py rejects bad Weekend/code values, unused load_models() removed, deps and Python updated. Results reproduce byte-for-byte on Python 3.15. 15 tests pass.
-Next: user picks from the suggested additions (deploy the app, calibration, bootstrap CIs, learning curves, sensitivity analysis, PDPs, slice analysis + model card).
+Building the 9 additions (user: "build them all", 2026-11-13). Order: analysis code, one main.py run, docs, app, presentation.
+
+1. Calibration: reliability diagram, Brier score, calibrated Decision Tree (`predator/calibration.py`) - todo
+2. Bootstrap 95% CIs for test F1/ROC-AUC + McNemar Decision Tree vs XGBoost (`predator/significance.py`) - todo
+3. Learning and validation curves (`predator/curves.py`) - todo
+4. Business sensitivity analysis (threshold.py) + assumption inputs in the app - todo
+5. Partial dependence plots for PageValues and Month (explain.py) - todo
+6. Slice analysis by VisitorType/Month/Region (evaluate.py) + docs/model_card.md - todo
+7. PageValues leakage discussion (docs/methodology.md, results, README) - todo
+8. Deploy prep for Streamlit Community Cloud (commit models/, steps in docs/deploy.md) - todo; the deploy itself needs the user's account
+9. README badges; GitHub description, topics and v1.0.0 release - todo; the GitHub settings need the user (no tool), after the repo is recreated
 
 ## Open problems
 
