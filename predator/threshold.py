@@ -25,6 +25,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import seaborn as sns
 from sklearn.metrics import f1_score, precision_score, recall_score
 
 from predator.data import save_figure
@@ -54,9 +55,14 @@ OFFER_CONVERSION_BOOST = 0.40
 THRESHOLDS_TO_TRY = np.round(np.arange(0.01, 1.00, 0.01), 2)
 
 
-def profit_per_outcome():
+def profit_per_outcome(
+    order_profit=AVERAGE_ORDER_PROFIT, offer_cost=OFFER_COST, conversion_boost=OFFER_CONVERSION_BOOST
+):
     """
     The profit from one session for each of the four possible outcomes.
+
+    The three inputs default to the business assumptions above; the
+    sensitivity analysis and the app pass other values.
 
     - True positive (flagged, really a buyer): profit from the sale the
       offer secures, minus the offer cost.
@@ -70,14 +76,21 @@ def profit_per_outcome():
         A dictionary with the profit for "tp", "fp", "fn" and "tn".
     """
     return {
-        "tp": AVERAGE_ORDER_PROFIT * OFFER_CONVERSION_BOOST - OFFER_COST,
-        "fp": -OFFER_COST,
+        "tp": order_profit * conversion_boost - offer_cost,
+        "fp": -offer_cost,
         "fn": 0.0,
         "tn": 0.0,
     }
 
 
-def calculate_profit(true_target, probabilities, threshold):
+def calculate_profit(
+    true_target,
+    probabilities,
+    threshold,
+    order_profit=AVERAGE_ORDER_PROFIT,
+    offer_cost=OFFER_COST,
+    conversion_boost=OFFER_CONVERSION_BOOST,
+):
     """
     Work out the campaign profit if we target every session whose
     probability is at least the threshold.
@@ -86,6 +99,8 @@ def calculate_profit(true_target, probabilities, threshold):
         true_target: the real labels (0/1).
         probabilities: the model's purchase probabilities.
         threshold: the probability cutoff.
+        order_profit, offer_cost, conversion_boost: the business
+            assumptions (default: the constants at the top of this file).
     Returns:
         A dictionary with the total "profit", the counts "tp", "fp", "fn",
         "tn", the number of "targeted" sessions and the "missed_profit"
@@ -99,14 +114,14 @@ def calculate_profit(true_target, probabilities, threshold):
     false_negatives = int(((predictions == 0) & (true_target == 1)).sum())
     true_negatives = int(((predictions == 0) & (true_target == 0)).sum())
 
-    values = profit_per_outcome()
+    values = profit_per_outcome(order_profit, offer_cost, conversion_boost)
     total_profit = (
         true_positives * values["tp"]
         + false_positives * values["fp"]
         + false_negatives * values["fn"]
         + true_negatives * values["tn"]
     )
-    missed_profit = false_negatives * (AVERAGE_ORDER_PROFIT * OFFER_CONVERSION_BOOST - OFFER_COST)
+    missed_profit = false_negatives * values["tp"]
 
     return {
         "profit": float(total_profit),
@@ -286,3 +301,133 @@ def plot_profit_curves(training_curves, chosen_thresholds):
     figure.suptitle("Profit and F1 versus decision threshold", fontsize=13)
     figure.tight_layout()
     return save_figure(figure, "profit_vs_threshold.png")
+
+
+# ---------------------------------------------------------------------------
+# SENSITIVITY ANALYSIS
+# The assumptions above are guesses, so we check how the best threshold
+# moves when they change. These are the values tried for the two
+# assumptions that are hardest to know in advance.
+# ---------------------------------------------------------------------------
+OFFER_COSTS_TO_TRY = [2.0, 4.0, 6.0, 8.0, 10.0, 12.0]
+CONVERSION_BOOSTS_TO_TRY = [0.10, 0.20, 0.30, 0.40, 0.50, 0.60]
+
+
+def break_even_probability(
+    order_profit=AVERAGE_ORDER_PROFIT, offer_cost=OFFER_COST, conversion_boost=OFFER_CONVERSION_BOOST
+):
+    """
+    The purchase probability above which sending an offer pays off.
+
+    If a session buys with probability p, sending it the offer earns on
+    average:
+        p * (order_profit * conversion_boost - offer_cost) - (1 - p) * offer_cost
+        = p * order_profit * conversion_boost - offer_cost
+    This is above zero when p > offer_cost / (order_profit * conversion_boost).
+
+    That cutoff is only right if the model's probabilities are calibrated
+    (a "0.3" really means 30% of such sessions buy); see calibration.py.
+
+    Returns:
+        The break-even probability as a float.
+    """
+    return offer_cost / (order_profit * conversion_boost)
+
+
+def find_best_profit_threshold(true_target, probabilities, order_profit, offer_cost, conversion_boost):
+    """
+    Try every threshold in THRESHOLDS_TO_TRY and return the most profitable one.
+
+    Inputs:
+        true_target: the real labels (0/1).
+        probabilities: the model's purchase probabilities.
+        order_profit, offer_cost, conversion_boost: the business assumptions.
+    Returns:
+        (best_threshold, best_profit). If several thresholds tie, the first
+        (lowest) one is used. If no threshold makes a profit, the answer is
+        (1.0, 0.0): send no offers at all.
+    """
+    best_threshold = 1.0
+    best_profit = 0.0
+    for threshold in THRESHOLDS_TO_TRY:
+        profit = calculate_profit(
+            true_target, probabilities, threshold, order_profit, offer_cost, conversion_boost
+        )["profit"]
+        if profit > best_profit:
+            best_threshold = float(threshold)
+            best_profit = profit
+    return best_threshold, best_profit
+
+
+def run_sensitivity_analysis(training_results, train_target, model_names):
+    """
+    Find the best-profit threshold for every combination of offer cost and
+    conversion boost, for each of the given models.
+
+    Like tune_thresholds(), this uses the out-of-fold training
+    probabilities, so the test set is not touched.
+
+    Inputs:
+        training_results: from train.train_all_models().
+        train_target: the training labels.
+        model_names: the models to analyse (e.g. the Decision Tree and XGBoost).
+    Returns:
+        A DataFrame with one row per model and combination, also saved to
+        outputs/sensitivity_analysis.csv.
+    """
+    print("\nSensitivity analysis: best threshold for other business assumptions...")
+    true_target = np.asarray(train_target)
+    rows = []
+    for model_name in model_names:
+        probabilities = training_results[model_name]["oof_probabilities"]
+        for offer_cost in OFFER_COSTS_TO_TRY:
+            for conversion_boost in CONVERSION_BOOSTS_TO_TRY:
+                best_threshold, best_profit = find_best_profit_threshold(
+                    true_target, probabilities, AVERAGE_ORDER_PROFIT, offer_cost, conversion_boost
+                )
+                rows.append(
+                    {
+                        "Model": model_name,
+                        "Offer cost": offer_cost,
+                        "Conversion boost": conversion_boost,
+                        "Break-even probability": round(
+                            break_even_probability(AVERAGE_ORDER_PROFIT, offer_cost, conversion_boost), 3
+                        ),
+                        "Best threshold": best_threshold,
+                        "Training profit": round(best_profit, 2),
+                    }
+                )
+
+    table = pd.DataFrame(rows)
+    table.to_csv(os.path.join(OUTPUTS_FOLDER, "sensitivity_analysis.csv"), index=False)
+    plot_sensitivity_heatmaps(table, model_names)
+    return table
+
+
+def plot_sensitivity_heatmaps(sensitivity_table, model_names):
+    """
+    Draw one heatmap per model: the best threshold for each offer cost
+    (rows) and conversion boost (columns).
+
+    Inputs:
+        sensitivity_table: the DataFrame from run_sensitivity_analysis().
+        model_names: the models in the table.
+    Returns:
+        The path of the saved plot.
+    """
+    figure, axes = plt.subplots(1, len(model_names), figsize=(6.2 * len(model_names), 5))
+    for axis, model_name in zip(axes, model_names, strict=True):
+        rows = sensitivity_table[sensitivity_table["Model"] == model_name]
+        grid = rows.pivot(index="Offer cost", columns="Conversion boost", values="Best threshold")
+        sns.heatmap(grid, annot=True, fmt=".2f", cmap="viridis", vmin=0, vmax=1, ax=axis, cbar=False)
+        axis.set_title(model_name, fontsize=11)
+        axis.set_xlabel("Conversion boost from the offer (1.00 = send no offers)")
+        axis.set_ylabel("Offer cost ($)")
+    figure.suptitle(
+        "Best-profit threshold for other business assumptions (order profit $"
+        + str(int(AVERAGE_ORDER_PROFIT))
+        + ")",
+        fontsize=13,
+    )
+    figure.tight_layout()
+    return save_figure(figure, "sensitivity_thresholds.png")
