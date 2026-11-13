@@ -16,6 +16,7 @@ import os
 import sys
 
 import joblib
+import numpy as np
 import pandas as pd
 
 from predator.data import ALL_FEATURES, CATEGORICAL_FEATURES, NUMERICAL_FEATURES
@@ -45,17 +46,23 @@ def prepare_session(session_values):
     for feature in NUMERICAL_FEATURES:
         try:
             row[feature] = float(session_values[feature])
-        except (TypeError, ValueError):
-            raise ValueError(feature + " must be a number, got: " + repr(session_values[feature]))
+        except (TypeError, ValueError) as error:
+            raise ValueError(feature + " must be a number, got: " + repr(session_values[feature])) from error
 
     for feature in CATEGORICAL_FEATURES:
         value = session_values[feature]
         if feature in INTEGER_CODE_FEATURES:
-            row[feature] = int(value)
+            try:
+                row[feature] = int(value)
+            except (TypeError, ValueError) as error:
+                raise ValueError(feature + " must be a whole number code, got: " + repr(value)) from error
         elif feature == "Weekend":
-            # Accept true/false as a JSON boolean or as text.
-            if isinstance(value, str):
+            # Accept true/false as a JSON boolean or as text. Anything else is
+            # an error, so a typo like "yes" is not silently read as False.
+            if isinstance(value, str) and value.strip().lower() in ("true", "false"):
                 value = value.strip().lower() == "true"
+            if not isinstance(value, (bool, np.bool_)):
+                raise ValueError("Weekend must be true or false, got: " + repr(value))
             row[feature] = bool(value)
         else:
             row[feature] = str(value)

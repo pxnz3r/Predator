@@ -216,11 +216,8 @@ def run_ablation(train_features, train_target, test_features, test_target,
     reduced_models = {name: result["pipeline"] for name, result in reduced_results.items()}
 
     reduced_table = build_comparison_table(reduced_models, reduced_results,
-                                           reduced_test_features, test_target)
-    # build_comparison_table() saves to model_comparison.csv, so put the
-    # full table back and save the reduced one under its own name.
-    full_comparison_table.to_csv(os.path.join(OUTPUTS_FOLDER, "model_comparison.csv"), index=False)
-    reduced_table.to_csv(os.path.join(OUTPUTS_FOLDER, "ablation_model_comparison.csv"), index=False)
+                                           reduced_test_features, test_target,
+                                           file_prefix="ablation_")
 
     plot_roc_curves(reduced_models, reduced_test_features, test_target,
                     filename="ablation_roc_curves.png",

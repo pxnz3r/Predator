@@ -87,21 +87,23 @@ def evaluate_model(model_name, pipeline, test_features, test_target, threshold=0
     return metrics
 
 
-def build_comparison_table(models, training_results, test_features, test_target):
+def build_comparison_table(models, training_results, test_features, test_target, file_prefix=""):
     """
     Evaluate every model and put the scores in one table.
 
     It also prints each model's confusion matrix and classification report,
-    and saves the reports to outputs/classification_reports.txt.
+    and saves the reports to outputs/<file_prefix>classification_reports.txt.
 
     Inputs:
         models: dictionary model name -> fitted pipeline.
         training_results: the dictionary from train.train_all_models()
             (used for the cross-validated F1 column).
         test_features, test_target: the test data.
+        file_prefix: added to both file names, so the ablation run
+            (file_prefix="ablation_") does not overwrite the main results.
     Returns:
         A pandas DataFrame with one row per model, also saved to
-        outputs/model_comparison.csv.
+        outputs/<file_prefix>model_comparison.csv.
     """
     print("\nEvaluating models on the test set (threshold 0.5)...")
     rows = []
@@ -135,8 +137,8 @@ def build_comparison_table(models, training_results, test_features, test_target)
     table = pd.DataFrame(rows).round(3)
 
     os.makedirs(OUTPUTS_FOLDER, exist_ok=True)
-    table.to_csv(os.path.join(OUTPUTS_FOLDER, "model_comparison.csv"), index=False)
-    with open(os.path.join(OUTPUTS_FOLDER, "classification_reports.txt"), "w") as file:
+    table.to_csv(os.path.join(OUTPUTS_FOLDER, file_prefix + "model_comparison.csv"), index=False)
+    with open(os.path.join(OUTPUTS_FOLDER, file_prefix + "classification_reports.txt"), "w") as file:
         file.write(report_text)
 
     print("Model comparison (test set):")
