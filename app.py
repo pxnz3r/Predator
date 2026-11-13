@@ -4,6 +4,7 @@ app.py - Streamlit demo for Predator.
 Run it from the project folder (after python main.py):
     streamlit run app.py
 
+Page 0 (Overview): what the project is and how to use and read the app.
 Page 1 (Predict a session): enter a session's features and see the
 purchase probability, the decision at the business threshold and the
 main factors behind the prediction.
@@ -13,7 +14,6 @@ Page 2 (Model comparison): the comparison tables and key figures.
 import json
 import os
 
-import altair as alt
 import pandas as pd
 import streamlit as st
 
@@ -243,35 +243,32 @@ def choice_input(feature, start_values, model_info, key_prefix):
     )
 
 
-def probability_chart(probability, threshold):
+def probability_bar(probability, threshold):
     """
     One bar from 0 to 100%: the purchase probability, with the business
-    threshold drawn as a dashed line across it.
+    threshold drawn as a line across it. Plain HTML in the text colour, so
+    it looks right in the light and the dark theme.
 
     Inputs:
         probability: the predicted purchase probability.
         threshold: the business threshold.
     Returns:
-        An Altair chart.
+        The HTML for st.markdown.
     """
-    scale = alt.Scale(domain=[0, 1])
-    axis = alt.Axis(format="%", title=None, tickCount=5, grid=False)
-    track = (
-        alt.Chart(pd.DataFrame({"end": [1.0]}))
-        .mark_bar(opacity=0.15, cornerRadius=4)
-        .encode(x=alt.X("end:Q", scale=scale, axis=axis))
-    )
-    bar = (
-        alt.Chart(pd.DataFrame({"probability": [probability]}))
-        .mark_bar(cornerRadius=4)
-        .encode(x=alt.X("probability:Q", scale=scale, axis=axis))
-    )
-    line = (
-        alt.Chart(pd.DataFrame({"threshold": [threshold]}))
-        .mark_rule(strokeWidth=2, strokeDash=[4, 3])
-        .encode(x=alt.X("threshold:Q", scale=scale))
-    )
-    return (track + bar + line).properties(height=24)
+    filled = min(max(probability, 0.0), 1.0) * 100
+    line = min(max(threshold, 0.0), 1.0) * 100
+    return f"""
+<div style="position: relative; height: 12px; margin: 14px 0 6px; border-radius: 6px;
+            background: color-mix(in srgb, currentColor 12%, transparent);">
+  <div style="width: {filled:.1f}%; height: 100%; border-radius: 6px;
+              background: color-mix(in srgb, currentColor 55%, transparent);"></div>
+  <div style="position: absolute; left: calc({line:.1f}% - 1px); top: -6px; bottom: -6px;
+              width: 2px; border-radius: 1px; background: currentColor;"></div>
+</div>
+<div style="display: flex; justify-content: space-between; font-size: 0.8rem; opacity: 0.6;">
+  <span>0%</span><span>100%</span>
+</div>
+"""
 
 
 def show_prediction_page(model_info, models, model_name, threshold):
@@ -335,10 +332,10 @@ def show_prediction_page(model_info, models, model_name, threshold):
         else:
             st.header("Don't send the offer", anchor=False)
         st.metric("Purchase probability", "{:.1%}".format(result["probability"]))
-        st.altair_chart(probability_chart(result["probability"], threshold), width="stretch")
+        st.markdown(probability_bar(result["probability"], threshold), unsafe_allow_html=True)
         st.caption(
-            f"Dashed line: the business threshold, {threshold:.2f}. "
-            f"At the default 0.5 cutoff the model predicts {result['label']}."
+            f"The line marks the business threshold, {threshold:.2f}: the offer goes out when the "
+            f"probability reaches it. At the default 0.5 cutoff the model predicts {result['label']}."
         )
         if model_name == "Naive Bayes (baseline)":
             st.caption(
@@ -439,9 +436,112 @@ def show_comparison_page(model_info):
         show_figure("calibration_before_after.png")
 
 
+REPO_URL = "https://github.com/pxnz3r/Predator"
+
+
+def show_overview_page(model_info):
+    """
+    Page 0: what the project is, how to use the app and how to read it,
+    for someone who arrives with only the link.
+
+    Input:
+        model_info: the saved model information.
+    Returns:
+        Nothing.
+    """
+    column_text, column_side = st.columns([3, 2], gap="large")
+
+    with column_text:
+        st.markdown(
+            "Predator predicts whether a visit to an online shop will end in a purchase, using only "
+            "what the visitor did during that visit: the pages they opened, how long they stayed, "
+            "how valuable those pages were, the month and the kind of visitor. It then decides "
+            "whether the shop should send that visitor a discount offer, by weighing what the offer "
+            "costs against the profit it could win."
+        )
+        st.markdown(
+            "It is a machine learning course project. The Decision Tree and KNN are the course "
+            "models; Naive Bayes is a simple baseline and XGBoost a stronger benchmark to compare "
+            "them against."
+        )
+
+        st.subheader("How to use it", anchor=False)
+        st.markdown(
+            "1. Open **Predict a session** and pick where to start: a typical session, a real "
+            "buyer or a real browser from the dataset.\n"
+            "2. Change any input. The decision and the purchase probability on the right update "
+            "as you go.\n"
+            "3. In the sidebar, switch the model or change the business assumptions. The business "
+            "threshold moves to the most profitable value for them. On a phone, the sidebar opens "
+            "from the arrow at the top left.\n"
+            "4. Pick the **Decision Tree** to see the exact questions it asked about the session.\n"
+            "5. Open **Model comparison** for the scores, charts and tests behind every model."
+        )
+
+        st.subheader("How to read the result", anchor=False)
+        st.markdown(
+            "**Purchase probability** is the model's estimate that this visit ends in an order.\n\n"
+            "**Business threshold** is the probability at which sending an offer pays off on "
+            "average. It starts at the value that earned the most on the training data for the "
+            "assumptions in the sidebar. The offer goes out when the probability reaches it.\n\n"
+            "**Break-even probability** is where one offer exactly pays for itself: offer cost "
+            "divided by the profit the offer secures from a buyer.\n\n"
+            "The profit, cost and boost values are illustrative, not from a real shop."
+        )
+
+        st.subheader("What it found", anchor=False)
+        st.markdown(
+            "- **Page value decides most predictions.** 56% of sessions that reached a page with "
+            "value bought, against 3.9% of the rest. It is the top input for every model.\n"
+            "- **Season comes second.** November has the highest purchase rate (25%), February "
+            "the lowest (1.6%).\n"
+            "- **The Decision Tree is nearly as good as XGBoost** (F1 0.627 against 0.645 on the "
+            "test set) and stays fully readable.\n"
+            "- **0.5 is rarely the best cutoff.** The most profitable threshold moves a lot with "
+            "the offer's cost and effect, which is why the sidebar lets you change them."
+        )
+
+        st.subheader("Limits", anchor=False)
+        st.markdown(
+            "Page value is computed from purchases that followed each page. If those include the "
+            "visit's own purchase, the scores are optimistic: without it the Decision Tree's F1 "
+            "drops to 0.384, so real performance likely lies between the two. Traffic source, "
+            "region, browser and operating system are anonymous codes in the data, so they can't "
+            "be named here."
+        )
+
+    with column_side:
+        st.subheader("The models", anchor=False)
+        st.markdown(
+            "- **Decision Tree**: a flowchart of yes/no questions learned from the data.\n"
+            "- **KNN**: looks up the most similar past sessions. The undersampled version trains "
+            "on as many browsers as buyers.\n"
+            "- **Naive Bayes**: a simple probabilistic baseline.\n"
+            "- **XGBoost**: a series of small trees, each fixing the last one's mistakes.\n\n"
+            f"Best by cross-validated F1: **{model_info['best_model']}**."
+        )
+
+        st.subheader("The data", anchor=False)
+        st.markdown(
+            "12,330 sessions from one year of a real online shop, 15.5% of them ending in a "
+            "purchase. [Online Shoppers Purchasing Intention Dataset]"
+            "(https://archive.ics.uci.edu/dataset/468), Sakar et al. 2018, UCI Machine Learning "
+            "Repository, CC BY 4.0. The models were tested once, on 2,466 sessions held back "
+            "from training."
+        )
+
+        st.subheader("More", anchor=False)
+        st.markdown(
+            f"- [Source code on GitHub]({REPO_URL})\n"
+            f"- [Full results]({REPO_URL}/blob/main/docs/results.md)\n"
+            f"- [Methodology]({REPO_URL}/blob/main/docs/methodology.md)\n"
+            f"- [Model card]({REPO_URL}/blob/main/docs/model_card.md)"
+        )
+
+
 def main():
     """
-    Build the whole app: sidebar settings and the two pages.
+    Build the whole app: sidebar settings and the three pages.
 
     Returns:
         Nothing.
@@ -523,7 +623,11 @@ def main():
             f"Break-even probability: {break_even:.2f}"
         )
 
-    prediction_tab, comparison_tab = st.tabs(["Predict a session", "Model comparison"])
+    overview_tab, prediction_tab, comparison_tab = st.tabs(
+        ["Overview", "Predict a session", "Model comparison"]
+    )
+    with overview_tab:
+        show_overview_page(model_info)
     with prediction_tab:
         show_prediction_page(model_info, models, model_name, threshold)
     with comparison_tab:
