@@ -1,0 +1,6 @@
+Model,F1,F1 95% low,F1 95% high,ROC-AUC,ROC-AUC 95% low,ROC-AUC 95% high
+Decision Tree,0.627,0.59,0.661,0.922,0.908,0.935
+KNN,0.469,0.422,0.516,0.734,0.704,0.761
+KNN (undersampled),0.517,0.481,0.554,0.843,0.822,0.863
+Naive Bayes (baseline),0.293,0.27,0.317,0.733,0.71,0.757
+XGBoost (benchmark),0.645,0.609,0.679,0.929,0.917,0.941

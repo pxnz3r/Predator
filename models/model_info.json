@@ -1,0 +1,378 @@
+{
+  "best_model": "XGBoost (benchmark)",
+  "model_files": {
+    "Decision Tree": "decision_tree.joblib",
+    "KNN": "knn.joblib",
+    "KNN (undersampled)": "knn_undersampled.joblib",
+    "Naive Bayes (baseline)": "naive_bayes.joblib",
+    "XGBoost (benchmark)": "xgboost_benchmark.joblib"
+  },
+  "thresholds": {
+    "Decision Tree": {
+      "default": 0.5,
+      "best_f1": 0.76,
+      "best_profit": 0.7
+    },
+    "KNN": {
+      "default": 0.5,
+      "best_f1": 0.35,
+      "best_profit": 0.35
+    },
+    "KNN (undersampled)": {
+      "default": 0.5,
+      "best_f1": 0.53,
+      "best_profit": 0.53
+    },
+    "Naive Bayes (baseline)": {
+      "default": 0.5,
+      "best_f1": 0.99,
+      "best_profit": 0.99
+    },
+    "XGBoost (benchmark)": {
+      "default": 0.5,
+      "best_f1": 0.62,
+      "best_profit": 0.5
+    }
+  },
+  "business_assumptions": {
+    "AVERAGE_ORDER_PROFIT": 60.0,
+    "OFFER_COST": 6.0,
+    "OFFER_CONVERSION_BOOST": 0.4
+  },
+  "numerical_features": [
+    "Administrative",
+    "Administrative_Duration",
+    "Informational",
+    "Informational_Duration",
+    "ProductRelated",
+    "ProductRelated_Duration",
+    "BounceRates",
+    "ExitRates",
+    "PageValues",
+    "SpecialDay"
+  ],
+  "categorical_features": [
+    "Month",
+    "OperatingSystems",
+    "Browser",
+    "Region",
+    "TrafficType",
+    "VisitorType",
+    "Weekend"
+  ],
+  "default_values": {
+    "Administrative": 1.0,
+    "Administrative_Duration": 8.0,
+    "Informational": 0.0,
+    "Informational_Duration": 0.0,
+    "ProductRelated": 18.0,
+    "ProductRelated_Duration": 600.5366666499999,
+    "BounceRates": 0.0031099595,
+    "ExitRates": 0.0251952205,
+    "PageValues": 0.0,
+    "SpecialDay": 0.0,
+    "Month": "May",
+    "OperatingSystems": 2,
+    "Browser": 2,
+    "Region": 1,
+    "TrafficType": 2,
+    "VisitorType": "Returning_Visitor",
+    "Weekend": false
+  },
+  "feature_ranges": {
+    "Administrative": [
+      0.0,
+      27.0
+    ],
+    "Administrative_Duration": [
+      0.0,
+      3398.75
+    ],
+    "Informational": [
+      0.0,
+      24.0
+    ],
+    "Informational_Duration": [
+      0.0,
+      2549.375
+    ],
+    "ProductRelated": [
+      0.0,
+      705.0
+    ],
+    "ProductRelated_Duration": [
+      0.0,
+      63973.52223
+    ],
+    "BounceRates": [
+      0.0,
+      0.2
+    ],
+    "ExitRates": [
+      0.0,
+      0.2
+    ],
+    "PageValues": [
+      0.0,
+      361.7637419
+    ],
+    "SpecialDay": [
+      0.0,
+      1.0
+    ]
+  },
+  "category_options": {
+    "Month": [
+      "Aug",
+      "Dec",
+      "Feb",
+      "Jul",
+      "June",
+      "Mar",
+      "May",
+      "Nov",
+      "Oct",
+      "Sep"
+    ],
+    "OperatingSystems": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8
+    ],
+    "Browser": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13
+    ],
+    "Region": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9
+    ],
+    "TrafficType": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20
+    ],
+    "VisitorType": [
+      "New_Visitor",
+      "Other",
+      "Returning_Visitor"
+    ],
+    "Weekend": [
+      false,
+      true
+    ]
+  },
+  "best_params": {
+    "Decision Tree": {
+      "criterion": "entropy",
+      "max_depth": 7,
+      "min_samples_leaf": 20,
+      "min_samples_split": 50
+    },
+    "KNN": {
+      "metric": "euclidean",
+      "n_neighbors": 3,
+      "weights": "distance"
+    },
+    "KNN (undersampled)": {
+      "metric": "manhattan",
+      "n_neighbors": 27,
+      "weights": "distance"
+    },
+    "Naive Bayes (baseline)": {},
+    "XGBoost (benchmark)": {
+      "learning_rate": 0.1,
+      "max_depth": 6,
+      "n_estimators": 100
+    }
+  },
+  "permutation_importance": {
+    "Decision Tree": {
+      "PageValues": 0.31791,
+      "Month": 0.06506,
+      "ExitRates": 0.00311,
+      "BounceRates": 0.00495,
+      "ProductRelated": 0.01369,
+      "ProductRelated_Duration": 0.01348,
+      "VisitorType": 0.00036,
+      "TrafficType": 0.00598,
+      "Weekend": 0.0,
+      "Administrative_Duration": 0.00955,
+      "Informational_Duration": 0.0009,
+      "Administrative": 0.00285,
+      "SpecialDay": 0.0,
+      "Browser": 0.0,
+      "Informational": -0.00101,
+      "Region": -0.00036,
+      "OperatingSystems": 0.0
+    },
+    "KNN": {
+      "PageValues": 0.15551,
+      "Month": 0.00794,
+      "ExitRates": 0.00451,
+      "BounceRates": 0.00185,
+      "ProductRelated": 0.00298,
+      "ProductRelated_Duration": -0.00494,
+      "VisitorType": 0.00939,
+      "TrafficType": -0.00782,
+      "Weekend": 0.00591,
+      "Administrative_Duration": -0.00599,
+      "Informational_Duration": -0.00205,
+      "Administrative": -0.00336,
+      "SpecialDay": -0.00112,
+      "Browser": -0.00491,
+      "Informational": -0.01098,
+      "Region": -0.01224,
+      "OperatingSystems": -0.01432
+    },
+    "KNN (undersampled)": {
+      "PageValues": 0.13575,
+      "Month": 0.02151,
+      "ExitRates": 0.00646,
+      "BounceRates": 0.00231,
+      "ProductRelated": 0.00417,
+      "ProductRelated_Duration": 0.00319,
+      "VisitorType": 0.0105,
+      "TrafficType": 0.00697,
+      "Weekend": 0.00517,
+      "Administrative_Duration": 0.00052,
+      "Informational_Duration": 0.00199,
+      "Administrative": 0.00019,
+      "SpecialDay": -0.00264,
+      "Browser": 0.00408,
+      "Informational": 0.00319,
+      "Region": 0.0009,
+      "OperatingSystems": 0.00276
+    },
+    "Naive Bayes (baseline)": {
+      "PageValues": 0.05467,
+      "Month": 0.02389,
+      "ExitRates": 0.03081,
+      "BounceRates": 0.02756,
+      "ProductRelated": 0.00465,
+      "ProductRelated_Duration": 0.00322,
+      "VisitorType": -0.00108,
+      "TrafficType": 0.01006,
+      "Weekend": 0.00132,
+      "Administrative_Duration": 0.0009,
+      "Informational_Duration": 0.00391,
+      "Administrative": 0.00085,
+      "SpecialDay": 0.00145,
+      "Browser": -0.00503,
+      "Informational": 0.00076,
+      "Region": 0.00112,
+      "OperatingSystems": -0.00154
+    },
+    "XGBoost (benchmark)": {
+      "PageValues": 0.30017,
+      "Month": 0.07249,
+      "ExitRates": 0.01574,
+      "BounceRates": 0.00287,
+      "ProductRelated": 0.00656,
+      "ProductRelated_Duration": 0.0081,
+      "VisitorType": 0.00202,
+      "TrafficType": 0.00122,
+      "Weekend": 6e-05,
+      "Administrative_Duration": 0.00448,
+      "Informational_Duration": -0.00047,
+      "Administrative": 0.00356,
+      "SpecialDay": 0.00013,
+      "Browser": -0.0006,
+      "Informational": 0.00071,
+      "Region": 0.00035,
+      "OperatingSystems": 0.00041
+    }
+  },
+  "test_metrics": [
+    {
+      "Model": "Decision Tree",
+      "Role": "Main (course)",
+      "CV F1": 0.642,
+      "Accuracy": 0.851,
+      "Precision": 0.512,
+      "Recall": 0.806,
+      "F1": 0.627,
+      "ROC-AUC": 0.922
+    },
+    {
+      "Model": "KNN",
+      "Role": "Main (course)",
+      "CV F1": 0.493,
+      "Accuracy": 0.861,
+      "Precision": 0.576,
+      "Recall": 0.395,
+      "F1": 0.469,
+      "ROC-AUC": 0.734
+    },
+    {
+      "Model": "KNN (undersampled)",
+      "Role": "Main (course)",
+      "CV F1": 0.521,
+      "Accuracy": 0.789,
+      "Precision": 0.401,
+      "Recall": 0.728,
+      "F1": 0.517,
+      "ROC-AUC": 0.843
+    },
+    {
+      "Model": "Naive Bayes (baseline)",
+      "Role": "Baseline",
+      "CV F1": 0.299,
+      "Accuracy": 0.273,
+      "Precision": 0.173,
+      "Recall": 0.974,
+      "F1": 0.293,
+      "ROC-AUC": 0.733
+    },
+    {
+      "Model": "XGBoost (benchmark)",
+      "Role": "Benchmark (beyond course)",
+      "CV F1": 0.673,
+      "Accuracy": 0.865,
+      "Precision": 0.545,
+      "Recall": 0.791,
+      "F1": 0.645,
+      "ROC-AUC": 0.929
+    }
+  ]
+}

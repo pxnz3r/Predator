@@ -1,0 +1,13 @@
+Model,Training sessions,Training F1,CV F1
+Decision Tree,789,0.63,0.587
+Decision Tree,2209,0.655,0.602
+Decision Tree,3629,0.666,0.623
+Decision Tree,5050,0.683,0.645
+Decision Tree,6470,0.675,0.638
+Decision Tree,7891,0.676,0.643
+KNN,789,1.0,0.377
+KNN,2209,1.0,0.463
+KNN,3629,1.0,0.467
+KNN,5050,1.0,0.475
+KNN,6470,1.0,0.49
+KNN,7891,1.0,0.493

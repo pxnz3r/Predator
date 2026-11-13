@@ -1,0 +1,3 @@
+Model A,Model B,"A right, B wrong","B right, A wrong",Chi-squared,p-value,Significant at 5%
+Decision Tree,XGBoost (benchmark),52,87,8.317,0.0039,True
+Decision Tree,KNN (undersampled),257,104,64.0,0.0,True

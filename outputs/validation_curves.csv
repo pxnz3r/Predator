@@ -1,0 +1,23 @@
+Model,Setting,Value,Training F1,CV F1
+Decision Tree,max_depth,1,0.667,0.667
+Decision Tree,max_depth,2,0.667,0.667
+Decision Tree,max_depth,3,0.629,0.627
+Decision Tree,max_depth,4,0.635,0.629
+Decision Tree,max_depth,5,0.646,0.636
+Decision Tree,max_depth,6,0.643,0.626
+Decision Tree,max_depth,7,0.676,0.643
+Decision Tree,max_depth,8,0.675,0.626
+Decision Tree,max_depth,10,0.684,0.624
+Decision Tree,max_depth,12,0.682,0.616
+Decision Tree,max_depth,15,0.682,0.608
+Decision Tree,max_depth,20,0.681,0.605
+KNN,n_neighbors (k),1,1.0,0.479
+KNN,n_neighbors (k),3,1.0,0.493
+KNN,n_neighbors (k),5,1.0,0.483
+KNN,n_neighbors (k),9,1.0,0.482
+KNN,n_neighbors (k),15,1.0,0.463
+KNN,n_neighbors (k),21,1.0,0.455
+KNN,n_neighbors (k),31,1.0,0.444
+KNN,n_neighbors (k),51,1.0,0.424
+KNN,n_neighbors (k),75,1.0,0.417
+KNN,n_neighbors (k),101,1.0,0.403

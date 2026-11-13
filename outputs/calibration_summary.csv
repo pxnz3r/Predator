@@ -1,0 +1,6 @@
+Model,Brier (raw),ROC-AUC (raw),Mean probability (raw),Profit at break-even (raw),Brier (calibrated),ROC-AUC (calibrated),Mean probability (calibrated),Profit at break-even (calibrated)
+Decision Tree,0.109,0.922,0.284,2580.0,0.072,0.928,0.151,4086.0
+KNN,0.117,0.734,0.137,1620.0,,,,
+KNN (undersampled),0.149,0.843,0.357,-714.0,,,,
+Naive Bayes (baseline),0.725,0.733,0.873,-4020.0,,,,
+XGBoost (benchmark),0.094,0.929,0.257,3330.0,0.071,0.93,0.155,4020.0
