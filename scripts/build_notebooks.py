@@ -20,7 +20,7 @@ import os
 import nbformat
 
 PROJECT_FOLDER = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-GITHUB_LINK = "https://github.com/YOUR_GITHUB_USERNAME/Predator"
+GITHUB_LINK = "https://github.com/pxnz3r/Predator"
 KAGGLE_LINK = "https://www.kaggle.com/code/YOUR_KAGGLE_USERNAME/predator-purchase-prediction"
 
 

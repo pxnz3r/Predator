@@ -14,8 +14,8 @@ The dataset is not needed at run time.
 2. Sign in at [share.streamlit.io](https://share.streamlit.io) with GitHub.
 3. Click **Create app**, then **Deploy a public app from GitHub**.
 4. Fill in:
-   - Repository: `YOUR_GITHUB_USERNAME/Predator`
-   - Branch: `main` (or the branch you publish)
+   - Repository: `pxnz3r/Predator`
+   - Branch: `main`
    - Main file path: `app.py`
    - App URL: pick a subdomain, e.g. `predator-purchase`
 5. Open **Advanced settings** and set **Python version** to **3.15** (the project needs 3.15 or newer). No secrets are needed.

@@ -5,7 +5,7 @@
 <p>Predicts whether an online shopping session ends in a purchase, and explains which behaviours drive the prediction.<br>Decision Tree and KNN, a Naive Bayes baseline and an XGBoost benchmark, with a profit-based decision threshold and a Streamlit demo.</p>
 
 <p>
-<a href="https://github.com/YOUR_GITHUB_USERNAME/Predator/actions/workflows/ci.yml"><img src="https://github.com/YOUR_GITHUB_USERNAME/Predator/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+<a href="https://github.com/pxnz3r/Predator/actions/workflows/ci.yml"><img src="https://github.com/pxnz3r/Predator/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
 <img src="https://img.shields.io/badge/python-3.15-blue" alt="Python 3.15">
 <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-green" alt="MIT license"></a>
 <a href="https://YOUR_APP_SUBDOMAIN.streamlit.app"><img src="https://static.streamlit.io/badges/streamlit_badge_black_white.svg" alt="Open in Streamlit"></a>
@@ -95,7 +95,7 @@ If the file is missing, `main.py` stops with a message explaining these steps. O
 Python 3.15 or newer. Dependencies are declared in `pyproject.toml` and pinned in `uv.lock`, so [uv](https://docs.astral.sh/uv/) installs the exact versions the results were produced with:
 
 ```bash
-git clone https://github.com/YOUR_GITHUB_USERNAME/Predator.git
+git clone https://github.com/pxnz3r/Predator.git
 cd Predator
 uv sync                          # creates .venv with the locked versions
 source .venv/bin/activate        # Windows: .venv\Scripts\activate

@@ -2,13 +2,12 @@
 
 The Kaggle version is `kaggle/predator-kaggle.ipynb`. It is self-contained: the code from every `predator/` module is pasted into its cells, and `find_dataset()` finds the CSV under `/kaggle/input/`. No package install or upload of other files is needed.
 
-Before publishing, replace the placeholders:
+Before publishing, replace the Kaggle placeholder:
 
 | Where | Placeholder | Replace with |
 |---|---|---|
-| `scripts/build_notebooks.py` | `YOUR_GITHUB_USERNAME` in `GITHUB_LINK` | Your GitHub username |
 | `kaggle/kernel-metadata.json` | `YOUR_KAGGLE_USERNAME` in `id` | Your Kaggle username |
-| `README.md` | `YOUR_GITHUB_USERNAME`, `YOUR_KAGGLE_USERNAME` | Your usernames |
+| `README.md`, `scripts/build_notebooks.py` | `YOUR_KAGGLE_USERNAME` | Your Kaggle username |
 
 Then rebuild the notebook so the link is in it: `python scripts/build_notebooks.py`.
 
