@@ -3,83 +3,83 @@ Decision Tree
 ============================================================
 Confusion matrix (rows = actual, columns = predicted):
                  No purchase  Purchase
-  No purchase           1445       639
-  Purchase               139       243
+  No purchase           1791       293
+  Purchase                74       308
 
               precision    recall  f1-score   support
 
- No purchase      0.912     0.693     0.788      2084
-    Purchase      0.276     0.636     0.384       382
+ No purchase      0.960     0.859     0.907      2084
+    Purchase      0.512     0.806     0.627       382
 
-    accuracy                          0.685      2466
-   macro avg      0.594     0.665     0.586      2466
-weighted avg      0.814     0.685     0.725      2466
+    accuracy                          0.851      2466
+   macro avg      0.736     0.833     0.767      2466
+weighted avg      0.891     0.851     0.864      2466
 
 ============================================================
 KNN
 ============================================================
 Confusion matrix (rows = actual, columns = predicted):
                  No purchase  Purchase
-  No purchase           1785       299
-  Purchase               280       102
+  No purchase           1973       111
+  Purchase               231       151
 
               precision    recall  f1-score   support
 
- No purchase      0.864     0.857     0.860      2084
-    Purchase      0.254     0.267     0.261       382
+ No purchase      0.895     0.947     0.920      2084
+    Purchase      0.576     0.395     0.469       382
 
-    accuracy                          0.765      2466
-   macro avg      0.559     0.562     0.560      2466
-weighted avg      0.770     0.765     0.768      2466
+    accuracy                          0.861      2466
+   macro avg      0.736     0.671     0.695      2466
+weighted avg      0.846     0.861     0.850      2466
 
 ============================================================
 KNN (undersampled)
 ============================================================
 Confusion matrix (rows = actual, columns = predicted):
                  No purchase  Purchase
-  No purchase           1164       920
-  Purchase               100       282
+  No purchase           1668       416
+  Purchase               104       278
 
               precision    recall  f1-score   support
 
- No purchase      0.921     0.559     0.695      2084
-    Purchase      0.235     0.738     0.356       382
+ No purchase      0.941     0.800     0.865      2084
+    Purchase      0.401     0.728     0.517       382
 
-    accuracy                          0.586      2466
-   macro avg      0.578     0.648     0.526      2466
-weighted avg      0.815     0.586     0.643      2466
+    accuracy                          0.789      2466
+   macro avg      0.671     0.764     0.691      2466
+weighted avg      0.858     0.789     0.811      2466
 
 ============================================================
 Naive Bayes (baseline)
 ============================================================
 Confusion matrix (rows = actual, columns = predicted):
                  No purchase  Purchase
-  No purchase            297      1787
-  Purchase                11       371
+  No purchase            301      1783
+  Purchase                10       372
 
               precision    recall  f1-score   support
 
- No purchase      0.964     0.143     0.248      2084
-    Purchase      0.172     0.971     0.292       382
+ No purchase      0.968     0.144     0.251      2084
+    Purchase      0.173     0.974     0.293       382
 
-    accuracy                          0.271      2466
-   macro avg      0.568     0.557     0.270      2466
-weighted avg      0.842     0.271     0.255      2466
+    accuracy                          0.273      2466
+   macro avg      0.570     0.559     0.272      2466
+weighted avg      0.845     0.273     0.258      2466
 
 ============================================================
 XGBoost (benchmark)
 ============================================================
 Confusion matrix (rows = actual, columns = predicted):
                  No purchase  Purchase
-  No purchase           1456       628
-  Purchase               118       264
+  No purchase           1832       252
+  Purchase                80       302
 
               precision    recall  f1-score   support
 
- No purchase      0.925     0.699     0.796      2084
-    Purchase      0.296     0.691     0.414       382
+ No purchase      0.958     0.879     0.917      2084
+    Purchase      0.545     0.791     0.645       382
 
-    accuracy                          0.697      2466
-   macro avg      0.610     0.695     0.605      2466
-weighted avg      0.828     0.697     0.737      2466
+    accuracy                          0.865      2466
+   macro avg      0.752     0.835     0.781      2466
+weighted avg      0.894     0.865     0.875      2466
 
