@@ -8,10 +8,10 @@
 <a href="https://github.com/pxnz3r/Predator/actions/workflows/ci.yml"><img src="https://github.com/pxnz3r/Predator/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
 <img src="https://img.shields.io/badge/python-3.15-blue" alt="Python 3.15">
 <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-green" alt="MIT license"></a>
-<a href="https://YOUR_APP_SUBDOMAIN.streamlit.app"><img src="https://static.streamlit.io/badges/streamlit_badge_black_white.svg" alt="Open in Streamlit"></a>
+<a href="https://predator.streamlit.app"><img src="https://static.streamlit.io/badges/streamlit_badge_black_white.svg" alt="Open in Streamlit"></a>
 </p>
 
-<p><a href="https://YOUR_APP_SUBDOMAIN.streamlit.app">Live demo</a> · <a href="https://www.kaggle.com/code/YOUR_KAGGLE_USERNAME/predator-purchase-prediction">Kaggle notebook</a> · <a href="docs/results.md">Results</a> · <a href="docs/methodology.md">Methodology</a> · <a href="docs/model_card.md">Model card</a></p>
+<p><a href="https://predator.streamlit.app">Live demo</a> · <a href="https://www.kaggle.com/code/YOUR_KAGGLE_USERNAME/predator-purchase-prediction">Kaggle notebook</a> · <a href="docs/results.md">Results</a> · <a href="docs/methodology.md">Methodology</a> · <a href="docs/model_card.md">Model card</a></p>
 
 <img src="outputs/figures/permutation_importance.png" width="720" alt="Permutation importance heatmap: PageValues dominates for every model">
 

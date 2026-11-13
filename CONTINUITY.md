@@ -26,7 +26,7 @@ Built the 9 additions (user: "build them all", 2026-11-13).
 5. Partial dependence plots - done d135c54
 6. Slice analysis + docs/model_card.md - done e2edbd2, c5d116c
 7. PageValues leakage discussion - done 3b776e0, 2278eff, efc426a
-8. Deploy prep for Streamlit Community Cloud - done 3e7fe6e; blocked: the deploy itself needs the user's Streamlit account (steps in docs/deploy.md), then replace YOUR_APP_SUBDOMAIN in README.md
+8. Deploy prep for Streamlit Community Cloud - done 3e7fe6e; deployed at https://predator.streamlit.app (2026-11-13, Python 3.15, main/app.py)
 9. README badges - done efc426a; GitHub links use `pxnz3r`; description, topics and v1.0.0 release set after the repo was recreated (2026-11-13)
 
 GitHub repo deleted and recreated on 2026-11-13 so the old leaked SHAs are gone; default branch renamed to `main`.
@@ -34,5 +34,4 @@ GitHub repo deleted and recreated on 2026-11-13 so the old leaked SHAs are gone;
 ## Open problems
 
 - The Decision Tree's validation curve peaks at depth 1 to 2 (CV F1 0.667), outside the tuning grid [3, 5, 7, 10, 15, None]. Documented in results.md; the grid was left as is to keep the reported numbers stable.
-- Streamlit deploy needs the user's account (docs/deploy.md); then replace YOUR_APP_SUBDOMAIN in README.md.
 - Kaggle links use the YOUR_KAGGLE_USERNAME placeholder until the user publishes the notebook (docs/kaggle_publishing.md).
