@@ -82,7 +82,7 @@ We use the **Online Shoppers Purchasing Intention** dataset (UCI / Kaggle): 12,3
 - Baseline: **Gaussian Naive Bayes**
 - Benchmark beyond the main models: **XGBoost**
 
-**What this notebook covers:** data checks and EDA, a leak-free preprocessing pipeline, tuning with 5-fold stratified cross-validation, test-set evaluation, feature importance, an ablation without `PageValues`, a profit-based decision threshold, and an error analysis of the sessions the best model gets wrong.
+**What this notebook covers:** data checks and EDA, a leak-free preprocessing pipeline, tuning with 5-fold stratified cross-validation, test-set evaluation with confidence intervals and significance tests, learning and validation curves, feature importance and partial dependence, an ablation without `PageValues` (and whether it leaks the answer), a profit-based decision threshold with a sensitivity analysis, probability calibration, and an error analysis of the sessions the best model gets wrong.
 
 {repo_note}""",
         "imports": "",
@@ -176,7 +176,48 @@ comparison_table""",
         "code": None,
     },
     {
-        "markdown": """## 7. Which features drive the predictions?
+        "markdown": """## 7. How sure are we? Confidence intervals, McNemar's test and slices
+
+The test set has only 382 buyers, so every score carries some luck. Three checks:
+
+- **Bootstrap 95% confidence intervals:** resample the test set with replacement 1,000 times, re-score each model, keep the middle 95%.
+- **McNemar's test:** for two models on the same sessions, count the sessions only one of them gets right. If the models were equally good, the two counts would be about equal.
+- **Slices:** scores per visitor type and month. One overall F1 can hide a group the model serves badly.""",
+        "module": "significance",
+        "imports": "from predator.significance import run_significance_analysis\nfrom predator.evaluate import evaluate_slices\nfrom predator.models import KNN, KNN_UNDERSAMPLED",
+        "code": """intervals_table, mcnemar_table = run_significance_analysis(
+    models, comparison_table, test_features, test_target,
+    pairs_to_compare=[(DECISION_TREE, XGBOOST), (DECISION_TREE, KNN_UNDERSAMPLED)])
+slice_table = evaluate_slices(models, [DECISION_TREE, XGBOOST], test_features, test_target)
+show("outputs/figures/slice_scores.png")
+display(intervals_table, mcnemar_table)""",
+    },
+    {
+        "markdown": """**Reading the checks**
+
+- The Decision Tree's F1 interval (0.59 to 0.66) overlaps XGBoost's (0.61 to 0.68), but McNemar's test still finds XGBoost **significantly better** (87 sessions only XGBoost gets right against 52, p = 0.004). Overlapping intervals are not the same as "no difference": both models are scored on the same sessions, and McNemar uses that pairing.
+- The Decision Tree beats the undersampled KNN by a wide margin (p < 0.001).
+- **Returning visitors are the hard group:** the tree's F1 is 0.59 for them against 0.77 for new visitors, because many returning visitors browse valuable pages without buying (precision 0.47). Months with only a handful of buyers (February has 1) give noisy scores.
+
+## 8. Overfitting and underfitting: learning and validation curves
+
+A **learning curve** trains the tuned model on growing parts of the training data. A **validation curve** changes one setting (tree depth, number of neighbours) and keeps the rest. Both use the same 5 folds and F1 as the grid search.""",
+        "module": "curves",
+        "imports": "from predator.curves import plot_learning_curves, plot_validation_curves",
+        "code": """learning_table = plot_learning_curves(models, train_features, train_target)
+validation_table = plot_validation_curves(models, train_features, train_target)
+show("outputs/figures/learning_curves.png")
+show("outputs/figures/validation_curves.png")""",
+    },
+    {
+        "markdown": """- The **Decision Tree** has a small gap between training F1 (0.68) and cross-validated F1 (0.64), so its depth limit and minimum leaf size keep overfitting in check, and its cross-validated F1 levels off after about 5,000 sessions.
+- **Surprise in the validation curve:** a depth-1 tree, the single rule `PageValues > 0.05`, has the highest cross-validated F1 (0.667, against 0.643 at the tuned depth 7). The grid started at depth 3, so the search never saw it. The deeper tree is still the better model for this project: a one-split tree gives only two probabilities, so it cannot rank sessions (ROC-AUC) or support a profit threshold. Above depth 7, F1 falls as the tree memorises noise. The result is another sign of how much the task rests on PageValues.
+- **KNN** scores a perfect training F1 at every size, because distance weighting gives each training session full weight on itself: a textbook case of high variance. Its cross-validated F1 is still rising at the full training size (0.38 to 0.49), so more data would help it. The validation curve peaks at k = 3 and declines as larger neighbourhoods outvote the minority class.""",
+        "imports": "",
+        "code": None,
+    },
+    {
+        "markdown": """## 9. Which features drive the predictions?
 
 Three views: the Decision Tree's own impurity-based importance, a picture of its top levels, and **permutation importance** for every model. Permutation importance shuffles one original column of the test set and measures how much ROC-AUC drops, so it works for any model and compares them on the same 17 features.""",
         "module": "explain",
@@ -196,9 +237,16 @@ importance_table.round(3)""",
         "code": """display(Markdown(write_tree_vs_xgboost_comparison(comparison_table, models, importance_table)))""",
     },
     {
-        "markdown": """## 8. Ablation: what if PageValues did not exist?
+        "markdown": """### Partial dependence: in which direction does a feature push?
 
-PageValues is computed from earlier purchases on the site, so it is close to a "historical purchase" signal. To see how much the models depend on it, we drop it, retrain every model with the same grids and folds, and compare scores and feature rankings.""",
+Permutation importance says how much a feature matters. **Partial dependence** shows how: set the feature to each value for 2,000 training sessions, predict, and average. The Decision Tree jumps from about 0.15 to 0.8 as soon as PageValues is above zero; XGBoost climbs more smoothly and levels off around 0.85 by PageValues 25. November raises the probability for both models, and a higher exit rate lowers it.""",
+        "imports": "from predator.explain import plot_partial_dependence",
+        "code": """show(plot_partial_dependence(models, [DECISION_TREE, XGBOOST], train_features))""",
+    },
+    {
+        "markdown": """## 10. Ablation: what if PageValues did not exist?
+
+PageValues is the average value of the pages a session visited, where a page's value comes from the purchases that followed views of it. If those values were computed over the same period, a buying session's own purchase raised its PageValues: a possible **target leak**. The dataset does not say which period was used, so we measure the dependence instead: drop PageValues, retrain every model with the same grids and folds, and compare scores and feature rankings. The scores without it are the honest lower bound for a deployment that can only use page values from earlier periods.""",
         "imports": "",
         "code": """ablation = run_ablation(train_features, train_target, test_features, test_target,
                         comparison_table, importance_table)
@@ -209,7 +257,7 @@ ablation["metrics"]""",
     {
         "markdown": """Without PageValues the Decision Tree, KNN and XGBoost lose roughly a third or more of their F1 (Naive Bayes barely changes, because it was already flagging almost every session), and the rankings reshuffle: the models fall back on **Month**, **ExitRates/BounceRates** and **product-page activity**. Those behaviour signals carry some information, but none replaces PageValues.
 
-## 9. Choosing the decision threshold with a business goal
+## 11. Choosing the decision threshold with a business goal
 
 The default 0.5 cutoff is arbitrary. Suppose the shop sends a discount offer to every session the model flags. Using the illustrative assumptions at the top of the next cell (order profit, offer cost, and the share of a buyer's profit the offer secures):
 
@@ -226,9 +274,35 @@ show(plot_profit_curves(training_curves, chosen_thresholds))
 threshold_table""",
     },
     {
-        "markdown": """The best threshold depends on the model's probability calibration as much as on the business numbers. The class-weighted Decision Tree, for example, pushes probabilities upwards, so its best-profit threshold sits well above 0.5. Naive Bayes loses money at every threshold, another sign its probabilities cannot be trusted. Change the assumptions and re-run to see the thresholds move.
+        "markdown": """The best threshold depends on the model's probability calibration as much as on the business numbers. The class-weighted Decision Tree, for example, pushes probabilities upwards, so its best-profit threshold sits well above 0.5. Naive Bayes loses money at every threshold, another sign its probabilities cannot be trusted.
 
-## 10. Error analysis: who does the best model get wrong?
+### How sensitive is the best threshold to the assumptions?
+
+The offer cost and the conversion boost are guesses, so we repeat the search for 36 combinations of them (still on out-of-fold training data). A threshold of 1.00 means no session is worth an offer.""",
+        "imports": "from predator.threshold import run_sensitivity_analysis",
+        "code": """sensitivity_table = run_sensitivity_analysis(training_results, train_target, [DECISION_TREE, XGBOOST])
+show("outputs/figures/sensitivity_thresholds.png")""",
+    },
+    {
+        "markdown": """Cheaper offers and stronger boosts push the best threshold down (target more sessions); with a 10% boost and an offer cost of $6 or more, no threshold makes a profit. The ordering is stable, so the conclusion "use a cutoff above 0.5 for the tree" holds over a wide range of assumptions, while the exact number does not.
+
+## 12. Probability calibration: can we trust the numbers?
+
+ROC-AUC only checks the **order** of the probabilities. **Calibration** checks the numbers: of the sessions given about 0.3, about 30% should buy. If they are calibrated, the best threshold follows from the assumptions alone: send the offer when p is above offer cost / (order profit x conversion boost), which is **0.25** here.
+
+The **reliability diagram** plots predicted probability against the real purchase rate (the diagonal is perfect), and the **Brier score** is the mean squared error of the probabilities. We then calibrate the Decision Tree and XGBoost with isotonic regression on the training folds.""",
+        "module": "calibration",
+        "imports": "from predator.calibration import run_calibration_analysis",
+        "code": """calibration_table = run_calibration_analysis(
+    models, [DECISION_TREE, XGBOOST], train_features, train_target, test_features, test_target)
+show("outputs/figures/calibration_all_models.png", width=600)
+show("outputs/figures/calibration_before_after.png", width=600)
+calibration_table""",
+    },
+    {
+        "markdown": """The Decision Tree's raw probabilities average 0.28 although only 15.5% of sessions buy: the balanced class weights inflate them. After calibration they average 0.15, the Brier score drops from 0.109 to 0.072, and ROC-AUC is unchanged. With calibrated probabilities the simple break-even rule (p > 0.25) earns **$4,086** on the test set, more than the tuned 0.70 threshold on the raw probabilities ($3,870). XGBoost improves the same way (Brier 0.094 to 0.071, $4,020). Calibration turns the threshold from a tuned number into one you can explain.
+
+## 13. Error analysis: who does the best model get wrong?
 
 We label every test session as a caught buyer, missed buyer, false alarm or correct non-buyer (using the best model at its best-profit threshold) and compare the groups.""",
         "module": "errors",
@@ -241,13 +315,15 @@ show("outputs/figures/error_probability_histogram.png", width=650)
 display(Markdown(open("outputs/error_analysis.md").read()))""",
     },
     {
-        "markdown": """## 11. Conclusions
+        "markdown": """## 14. Conclusions
 
 - **PageValues is the deciding signal.** Every model ranks it first, the Decision Tree splits on it at the root, and removing it costs every model a large share of its F1.
 - **The Decision Tree is the best main model.** It comes close to the XGBoost benchmark while staying fully readable, which matters when a shop team has to trust the rules.
 - **XGBoost is the strongest benchmark**, a little ahead on F1 and ROC-AUC, at the price of interpretability.
 - **KNN and Naive Bayes do not fit this data well.** KNN suffers from many one-hot dimensions and skewed features (undersampling helps); Naive Bayes' independence assumption breaks and its probabilities are unusable.
-- **The threshold is a business decision.** With a profit model, the best cutoff differs from 0.5 and from the best-F1 cutoff, and it depends on the assumptions.
+- **The gap to XGBoost is small but real.** The confidence intervals overlap, yet McNemar's test (p = 0.004) shows XGBoost makes significantly fewer mistakes on the same sessions.
+- **PageValues may leak part of the answer.** The scores without it are the honest lower bound for a live system that only knows page values from earlier periods.
+- **The threshold is a business decision.** With a profit model, the best cutoff differs from 0.5 and from the best-F1 cutoff, and it moves with the assumptions; calibrated probabilities make it explainable (p > cost / (profit x boost)) and earned the most profit.
 - **Missed buyers are mostly sessions with PageValues = 0**, which look like ordinary browsing; false alarms are mostly returning visitors who reached valuable pages and left. Fixing them needs more data about the visitor, not more tuning.
 
 {repo_note}""",
